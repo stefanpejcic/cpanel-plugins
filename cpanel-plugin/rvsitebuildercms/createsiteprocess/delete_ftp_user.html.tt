@@ -1,0 +1,17 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    SET CPANEL.CPVAR.dprefix = "../";
+    SET ftpuser = RAW_FORM('ftpuser').html();
+    SET destroy = RAW_FORM('ftpuser').html();
+%]
+
+[% SET ftpdeleted = {} %]
+[% IF ftpuser != '' %]
+	[% ftpdeleted = Uapi.exec("Ftp", "delete_ftp", {"user" => ftpuser , 'destroy' => destroy } ); %]
+[% END %]
+
+
+
+[% ftpdeleted.json() %]

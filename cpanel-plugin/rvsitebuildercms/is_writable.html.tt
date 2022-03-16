@@ -1,0 +1,12 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    SET CPANEL.CPVAR.dprefix = "../";
+    SET publicpath = RAW_FORM('publicpath').html();
+%]
+
+[% SET iswritable = Uapi.exec('RVsitebuilderCMS', 'check_writable', {'publicpath' => publicpath}).data; %]
+
+[% iswritable.json() %]
+

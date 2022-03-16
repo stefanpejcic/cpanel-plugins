@@ -1,0 +1,30 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    
+    SET CPANEL.CPVAR.dprefix = "../";
+    
+    SET adminemail = RAW_FORM('adminemail').html();
+    SET dbname = RAW_FORM('dbname').html();
+    SET dbuser = RAW_FORM('dbuser').html();
+    SET dbpassword = RAW_FORM('dbpassword').html();
+    SET isrepair = RAW_FORM('isrepair').html();
+    SET domainname = RAW_FORM('domainname').html();
+%]
+
+
+
+[% redirecttoken = Uapi.exec("RVsitebuilderCMS" , "redirect_token" ,    {  
+                                                                                'adminemail' => adminemail,
+                                                                                'dbhost' => 'localhost',
+                                                                                'dbname' => dbname , 
+                                                                                'dbuser' => dbuser, 
+                                                                                'dbpassword' => dbpassword , 
+                                                                                'isrepair' => isrepair,
+                                                                                'domainname' => domainname
+                                                                        }
+                            ); 
+%]
+
+[% redirecttoken.json() %]

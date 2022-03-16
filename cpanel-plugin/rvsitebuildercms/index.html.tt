@@ -1,0 +1,224 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    SET CPANEL.CPVAR.dprefix = "../";
+    SET has_feature = CPANEL.feature('rvsitebuildercms');
+    SET registerip = Uapi.exec( 'RVsitebuilderCMS', 'register_license_ip');
+    SET rvsb7version = Uapi.exec( 'RVsitebuilderCMS', 'get_rvsb7_cpplugin_version');
+    SET api_response = Uapi.exec( 'RVsitebuilderCMS', 'list_website');
+    SET iscloudlinux = Uapi.exec( 'RVsitebuilderCMS', 'isCloudlinux');
+%]
+
+[% WRAPPER '_assets/master.html.tt'
+    #app_key = 'rvsitebuildercms'
+    #page_title = "RVsitebuilder"
+    include_legacy_stylesheets = 0
+    include_legacy_scripts = 0
+    include_cjt = 0
+    use_master_bootstrap = 0
+    page_stylesheets = []
+-%]
+
+    <style>
+        .custom_color {
+            color: #028fc7;
+        }
+
+        .table > thead > tr > th {
+            border-bottom: 0px;
+        }
+
+        table {
+            border-collapse: separate;
+        }
+
+        td {
+            border: solid 1px #cec7c7;
+        }
+
+        tr:first-child td:first-child {
+            border-top-left-radius: 10px;
+        }
+
+        tr:first-child td:last-child {
+            border-top-right-radius: 10px;
+        }
+
+        tr:last-child td:first-child {
+            border-bottom-left-radius: 10px;
+        }
+
+        tr:last-child td:last-child {
+            border-bottom-right-radius: 10px;
+        }
+        .alert {
+            border-radius: 10px;
+        }
+        .cpanel_body {
+            max-width : 100%;
+        }
+        .btn-link{
+            padding-right: 5px;
+        }
+        .icon-help {
+            margin-left:-5px;
+            opacity:0.7;
+            font-size:11px;
+            text-decoration:none;
+            color:#ababab;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+                opacity: 1;
+        }
+    </style>
+    [% IF !CPANEL.feature('mysql') %]
+    <div class="alert alert-danger">
+        <span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
+        <div class="alert-message">
+            <strong>[% locale.maketext("Error:") %]</strong> [% locale.maketext("This feature, “MySQL”, is not enabled on your account. Please contact your reseller for access.") %]
+        </div>
+    </div>
+    [% END %]
+    [% IF !CPANEL.feature('filemanager') %]
+    <div class="alert alert-warning">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <div class="alert-message">
+            <strong>[% locale.maketext("Warning:") %]</strong> [% locale.maketext("This feature, “File manager”, is not enabled on your account. Please contact your reseller for access.") %]
+        </div>
+    </div>
+    [% END %]
+    [% IF has_feature %]
+        <div class="body-content text-center" style="padding-bottom:30px;">
+        	<div>
+	        	<span style="width:auto; margin:0 auto; position:relative;">
+                    <img src="image/logo_rvsitebuilder.png" style="margin-top:10px;margin-bottom:35px;width:50%;max-width: 600px;">
+                    <span style="font-size: 12px;position: relative;color: #b1a2a2;">V.[% rvsb7version.data.frameworkversion %]</span>
+                    <span style="font-size: 12px;position: relative;color: #b1a2a2;bottom: -20px;right: 85px;">Plugin
+                        [% rvsb7version.data.cppluginversion %]</span>
+                </span>
+            </div>
+            <h3 style="font-weight:700;font-size:33px;text-align:center;" class="custom_color">Create Professional Website in 1 Minute</h3>
+            <p>
+                <a href="https://support.rvglobalsoft.com/hc/en-us/articles/360015211433" target="_blank" style="color:#58595a;text-decoration: underline;">Guide for starting a website with RVsitebuilder CMS</a> |
+                <a href="https://support.rvglobalsoft.com/hc/en-us/sections/360000482693-RVsitebuilder-7" target="_blank" style="color:#58595a;text-decoration: underline;">Guide for building website with RVsitebuilder CMS</a>
+            </p>
+            [% IF api_response.data.list_website.size -%]
+                <section>
+                    <table id="subdomaintbl" class="sortable table responsive-table" align="center" style="margin-top:30px;margin-bottom:30px;width:80%;">
+                        <thead>
+                            <tr>
+                                <th class="custom_color" width="45%" style="padding-left:20px;">[% locale.maketext("Site") %]</th>
+                                <th class="custom_color" width="45%">[% locale.maketext("Document root") %]</th>
+                                <th class="custom_color text-left" width="10%"  style="padding-left:20px;">[% locale.maketext("Action") %]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            [% FOR list IN api_response.data.list_website -%] [% SET oddeven = loop.index % 2 ? 'odd' : 'even' -%]
+                                [% SET cmsversion = list.cms_version.match('^(\w+\.\w+)').0; %]
+                                [% SET phpdata = Uapi.exec('RVsitebuilderCMS', 'get_php_version', {'protocal' => list.protocal,'publicpath' => list.publicpath,'domainname' => list.sitename, 'cmsversion' => list.cms_version}); %]
+                                [% SET php_version = phpdata.data.page.phpversion.match('^(\w+\.\w+)').0 IF phpdata.data.page.phpversion.defined; %]
+                                [% SET php_require = phpdata.data.phprequire.split('(\d+\.\d+)').grep('^\d+\.\d+') IF phpdata.data.phprequire.defined %]
+                                [% SET matched = ''; %]
+                                [% SET dir_writable = Uapi.exec('RVsitebuilderCMS', 'check_writable', {'publicpath' => list.publicpath}).data; %]
+                                <tr class="row-[% oddeven %]">
+                                    <td class="text-left" style="border-right:0px;">
+                                        <a class="btn btn-link" href="[% list.protocal %][% list.sitename %]" target="_blank" style="color: #58595a;">[% list.sitename %]</a>
+                                        [% FOREACH require IN php_require %]
+                                            [% IF php_version == require %]
+                                                [% matched = require %]
+                                            [% END %]
+                                        [% END %]
+                                        [% IF matched == '' && php_require.defined || (!dir_writable.public_html || !dir_writable.rvsitebuildercms || !dir_writable.index || !dir_writable.htaccess) %]
+                                        <span class="label label-warning" data-toggle="tooltip"
+                                        title="[% IF matched == '' && php_require.defined %]-Your website may be found some errors because RVsitebuilder version [% cmsversion %] supports PHP version [% php_require.first %] - [% php_require.last %] only. Please check your PHP version[% END %]
+[% IF php_version != '7.3'  AND cmsversion != '7.4' %]- Your website may be found some errors because RVsitebuilder version [% cmsversion %] Recommend PHP 7.3 Please check your PHP version[% END %][% IF !dir_writable.public_html %]- Please check your permission directory public_html at '/home/[% CPANEL.CPDATA.USER %]'[% END %][% IF !dir_writable.rvsitebuildercms %]- Please check your permission directory rvsitebuildercms at '/home/[% CPANEL.CPDATA.USER %]'[% END %]
+[% IF !dir_writable.index %]- Please check your permission file index.php at '[% dir_writable.domain %]'[% END %]
+[% IF !dir_writable.htaccess %]- Please check your permission file .htaccess at '[% dir_writable.domain %]'[% END %]">Warning
+                                        </span>
+                                        [% END %]
+                                    </td>
+                                    <td class="text-left" style="border-left:0px;border-right:0px;">
+                                        <a id="[%  %]_HomeDir" href="../filemanager/index.html" target="_blank" class="ajaxfiles" style="color: #58595a;">
+                                            <span class="fas fa-home"></span>
+                                        </a>
+                                        <a id="[% list.publicpath FILTER html %]_lnk" href="../filemanager/index.html?dir=[% list.publicpath FILTER uri %]" target="_blank" class="ajaxfiles" style="color: #58595a;">
+                                            [% list.publicpath FILTER html %]
+                                        </a>
+                                    </td>
+                                    <td class="text-left" style="border-left:0px;">
+                                        [% IF list.error != '' %]
+                                            <a id="[%  %]_lnkManageRedirect" class="btn btn-link" href="https://support.rvglobalsoft.com/hc/en-us/articles/360036437293" target="_blank" title="[% list.error %]">
+                                                <span class="glyphicon glyphicon-warning-sign"></span> [% locale.maketext("Warning") %]
+                                            </a>
+                                        [% ELSIF (matched == '') %]
+                                            <a id="[%  %]_lnkManageRedirect" class="btn btn-link" disabled="disabled">
+                                                <span class="glyphicon glyphicon-warning-sign"></span> [% locale.maketext("Edit") %]
+                                            </a>
+                                        [% ELSE %]
+                                            <a id="[%  %]_lnkManageRedirect" class="btn btn-link" href="[% list.protocal %][% list.ssourl %]" target="_blank">
+                                                <span class="glyphicon glyphicon-pencil"></span> [% locale.maketext("Edit") %]
+                                            </a>
+                                        [% END %]
+                                        [% IF list.needrepair == 1 %]
+                                        	<form action="do_createnewsite.html" method="post" enctype="multipart/form-data">
+                                        		<input type="hidden"  name="selectdomainname" value="[% list.sitename %]"  />
+                                        		<input type="hidden"  name="documentroot" value="[% list.publicpath FILTER html %]"  />
+                                        		<input type="hidden"  name="hidprotocal" value="[% list.protocal %]" />
+                                        		<input type="hidden"  name="isrepair" value="1" />
+                                        		<button class="btn btn-link" type="submit">
+							                        <span class="glyphicon glyphicon-wrench"></span> [% locale.maketext("Repair") %]
+							                    </button>
+							                     <a href="https://support.rvglobalsoft.com/hc/en-us/articles/360036027953" target="_blank" class=" icon-help"><span class="glyphicon fa fa-question"></span></a>
+                                            </form>
+                                        [% END %]
+                                    </td>
+                                    <script>
+                                        var sitedata = {
+                                        'domain':[% list.sitename.json() %],
+                                        'cms':[% list.cms_version.json() %],
+                                        'require_php' : [% phpdata.data.phprequire.json() %],
+                                        'current_php':[% phpdata.data.page.phpversion.json() %]
+                                    };
+                                    console.log(sitedata);
+                                    </script>
+                                </tr>
+                            [% END -%]
+                        </tbody>
+                    </table>
+                </section>
+            [% ELSE -%]
+                <div>
+                    <img src="image/banner.png" style="width:57%;padding-top:10px;">
+                </div>
+            [% END -%]
+
+            <hr style="width:60%;border-color:#cecdcd;padding-bottom:15px;">
+            <a  class="btn btn-primary text-center" style="width:35%;border:0;border-radius:35px;font-size:160%;font-weight:600;"
+            [% IF CPANEL.CPDATA.item('DEMO')  != 1 && CPANEL.feature('mysql') %]
+                href="selectdomain.html"
+            [% ELSE %]
+                href="javascript:void(0)"
+                disabled="disabled"
+                title="You cannot create site using cPanel Demo mode."
+            [% END %]
+            >Create new site
+            </a>
+
+
+        </div>
+
+
+    [% #PROCESS '_assets/cjt2_header_include.tt' %]
+
+    [% ELSE -%]
+
+        <div class="body-content">
+            <div class="alert alert-danger">
+            </div>
+        </div>
+
+    [% END -%]
+
+[% END #wrapper -%]

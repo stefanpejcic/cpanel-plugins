@@ -1,0 +1,55 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    
+    SET CPANEL.CPVAR.dprefix = "../";
+    SET isrepair = RAW_FORM('isrepair').html();
+    
+%]
+[% IF isrepair == 0 %]
+	[% SET txterror = '' %]
+	[% SET dbname = Uapi.exec("RVsitebuilderCMS", "str_generator", {"size" => 6 } ); %]
+	[% SET dbuser = Uapi.exec("RVsitebuilderCMS", "str_generator", {"size" => 6 } ); %]
+	[% IF(ExpVar.expand('$dbprefix') == 1) %]
+	    [% SET fulldbname = ExpVar.expand('$dbownerprefix') _ dbname.data.str_generator %]
+	    [% SET fulldbuser = ExpVar.expand('$dbownerprefix') _ dbuser.data.str_generator %]
+	[% ELSE %]
+	    [% SET fulldbname = dbuser.data.str_generator %]
+	    [% SET fulldbuser = dbuser.data.str_generator %]
+	[% END %]
+	
+	[% SET valid = 1 %]
+	[% SET dbvalid = 1 %]
+	[% IF dbvalid %]
+	    [% SET dbcrated = Uapi.exec( 'Mysql', 'create_database', { name => fulldbname } ) %]
+	    [% IF dbcrated.status != 1 %]
+	        [% valid = 0 %]
+	        [% dbvalid = 0 %]
+	        [% txterror = dbcrated.errors %]
+	    [% END %]
+	[% END %]
+	[% IF dbvalid  %]
+	    [% SET dbpasswd = Uapi.exec("RVsitebuilderCMS", "str_generator", {"size" => 17 , "specialcha" => 1  } ); %]
+	    [% SET usercrated = Uapi.exec( 'Mysql', 'create_user', { name => fulldbuser, password => dbpasswd.data.str_generator } ) %]
+	    [% IF usercrated.status != 1 %]
+	        [% valid = 0 %]
+	        [% dbvalid = 0 %]
+	        [% txterror = usercrated.errors %]
+	    [% END %]
+	[% END %]
+	[% IF dbvalid  %]
+	    [% SET usertodb = Uapi.exec('Mysql', 'set_privileges_on_database', { user => fulldbuser , database => fulldbname, privileges => 'ALL PRIVILEGES' } ) %]
+	    [% IF usertodb.status != 1 %]
+	        [% valid = 0 %]
+	        [% dbvalid = 0 %]
+	        [% txterror = usertodb.errors %]
+	    [% END %]
+	[% END %]
+	
+	[% dbcreated = { 'valid' => valid , 'dbname' => fulldbname , 'dbuser' => fulldbuser , 'dbpassword' => dbpasswd.data.str_generator , 'txterror' => txterror , 'exectime' => 0 } %]
+[% ELSE %]
+	[% dbcreated = { 'valid' => 1 , 'dbname' => '' , 'dbuser' => '' , 'dbpassword' => '' , 'txterror' => '' , 'exectime' => 0 } %]
+[% END %]
+
+[% dbcreated.json() %]

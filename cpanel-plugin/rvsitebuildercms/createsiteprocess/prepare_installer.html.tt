@@ -1,0 +1,15 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    
+    SET CPANEL.CPVAR.dprefix = "../";
+    
+    SET publicpath = RAW_FORM('publicpath').html();
+    SET domainname = RAW_FORM('domainname').html();
+    SET protocal = RAW_FORM('protocal').html();
+%]
+
+
+[% prepareinstall = Uapi.exec("RVsitebuilderCMS" , "prepare_installer" , {'publicpath' => publicpath ,'domainname' => domainname,'protocal' => protocal}); %]
+[% prepareinstall.json() %]

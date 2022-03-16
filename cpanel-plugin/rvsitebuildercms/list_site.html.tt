@@ -1,0 +1,55 @@
+[% USE Api2 -%]
+[% USE Dumper; %]
+[% SET api_response = Uapi.exec( 'RVsitebuilderCMS', 'list_website'); -%]
+
+[% IF api_response.data.list_website.size -%]
+    [% FOR list IN api_response.data.list_website -%]
+        [% SET oddeven = loop.index % 2 ? 'odd' : 'even' -%]
+        <tr class="row-[% oddeven %]">
+
+            <td data-title="">
+                <a  class="btn btn-link" href="https://[% list.sitename %]" target="_blank">
+                    [% list.sitename %]
+                </a>
+            </td>
+            
+            <td data-title="">
+                <a id="[%  %]_HomeDir" href="../filemanager/index.html" target="_blank" class="ajaxfiles">
+                    <span class="fas fa-home"></span>
+                </a>
+                <a id="[% list.publicpath FILTER html %]_lnk" href="../filemanager/index.html?dir=[% list.publicpath FILTER uri %]" target="_blank" class="ajaxfiles" >
+                    [% list.publicpath FILTER html %]
+                </a>
+            </td>
+
+            <td data-title="">
+                <!--
+                <a id="[%  %]_lnkRemove"  class="btn btn-link" href="dodeldomainconfirm.html?domain=[%  %]&domaindisplay=[% sub.domain FILTER uri %]">
+
+                    <span class="glyphicon glyphicon-trash"></span>
+                    [% locale.maketext("Remove") %]
+                </a>
+                -->
+                [% IF list.error != '' %]
+                <a id="[%  %]_lnkManageRedirect" class="btn btn-link" href="" target="" title="[% list.error %]">
+                    <span class="glyphicon glyphicon-warning-sign"></span>
+                    [% locale.maketext("Warning") %]
+                </a>
+                [% ELSE %]
+                <a id="[%  %]_lnkManageRedirect" class="btn btn-link" href="[% list.protocal %][% list.ssourl %]" target="_blank">
+                    <span class="glyphicon glyphicon-pencil"></span>
+                    [% locale.maketext("Edit") %]
+                </a>
+                [% END %]
+            </td>
+        </tr>
+    [% END -%]
+[% ELSE -%]
+    [% SET err = locale.maketext("No Site are configured."); -%]
+    <tr class="empty-row info">
+        <td colspan="4">
+            [% err FILTER html %]
+        </td>
+    </tr>
+[% END -%]
+

@@ -1,0 +1,13 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    
+    SET CPANEL.CPVAR.dprefix = "../";
+    
+    SET publicpath = RAW_FORM('publicpath').html();
+%]
+
+[% removed = Uapi.exec("RVsitebuilderCMS" , "remove_installer" ,    {'publicpath' => publicpath}); %]
+
+[% removed.json() %]

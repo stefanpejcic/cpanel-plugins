@@ -1,0 +1,218 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    SET contactemails=Api2.exec("CustInfo" , "contactemails" , {});
+
+
+    SET CPANEL.CPVAR.dprefix = "../";
+    SET has_feature = CPANEL.feature('rvsitebuildercms');
+%]
+
+
+[% WRAPPER '_assets/master.html.tt'
+    #app_key = 'rvsitebuildercms'
+    #page_title = "RVsitebuilder"
+    include_legacy_stylesheets = 0
+    include_legacy_scripts = 0
+    include_cjt = 0
+    use_master_bootstrap = 0
+    page_js = js_code
+    page_stylesheets = []
+    page_scripts = []
+-%]
+    
+    <style>
+        .confirm_form {
+            width : 40%;
+            margin-left : 30%;
+        }
+        .custom_color {
+            color : #028fc7;
+        }
+        .alert {
+            border-radius : 10px;
+        }
+        .btn {
+            border-radius : 20px;
+            font-size:130%;
+            color:white;
+            width:13%;
+        }
+        .btn:hover {
+            color: white;
+        }
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            filter:alpha(opacity=50);
+            -moz-opacity:0.5;
+            -khtml-opacity: 0.5;
+            opacity: 0.5;
+        }
+        .centered {
+            z-index: 10001;
+            position: fixed;
+            top: 45%;
+            left: 48%;
+            margin-top: -50px;
+            margin-left: -100px;
+            margin: 0 auto;
+        }
+        .cpanel_body {
+            max-width : 100%;
+        }
+    </style>
+
+    [% IF has_feature %]
+        <form action="do_createnewsite.html" name="docreatewebsite" id="docreatewebsite"  method="post" enctype="multipart/form-data">
+            <div class="body-content text-center" style="padding-bottom:30px;">
+                <div>
+                    <img src="image/logo_rvsitebuilder.png" style="width:30%;margin-top:10px;margin-bottom:35px;">
+                </div>
+                <h3 style="font-weight:700;font-size:33px;text-align:center;" class="custom_color">Confirmation</h3>
+                <p>
+                    You can edit Admin Email and Site Name on this page. Admin Name will be used for website admin access such as<br>mydomainname.com/admin/login. The admin password can be created in website admin > Apps > Users.
+                </p>
+                <div class="row" style="padding-top:15px;">
+                    <div class="form-group confirm_form text-left">
+                        <label for="selectdomainname">Domain name</label>
+                        <input type="text" class="form-control" name="selectdomainname" value="[% RAW_FORM('domainname').html() %]" readonly />   
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group confirm_form text-left">
+                        <label for="documentroot">Document root</label>
+                        <input type="text" class="form-control" name="documentroot" value="[% RAW_FORM('hiddomainpath').html() %]" readonly /> 
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group confirm_form text-left">
+                        <label for="adminemail" class="custom_color">Admin Email</label>
+                        <input type="text" class="form-control" name="adminemail" id="adminemail" value="[% contactemails.0.value %]" style="border-color:#65c3e8;"/> 
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group confirm_form text-left">
+                        <label for="appname" class="custom_color">Site Name</label>
+                        <input type="text" class="form-control" name="appname" id="appname" value="[% RAW_FORM('domainname').html() %]" style="border-color:#65c3e8;"/> 
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-check confirm_form text-left">
+                        <input type="checkbox" id="submitoverwrite" />
+                        <label class="form-check-label" for="submitoverwrite">The installer will overwrite any files that exist whose names match a file name</label>
+                    </div>
+                    <div class="form-check confirm_form text-left">
+                        <input type="checkbox" id="submiteula" />
+                        <label for="submiteula">  Agree <a class="endusereula" href="rvsitebuildercmseula.html" target="_blank">End User License Agreement</a> </label>
+                    </div>
+                </div>
+                <hr style="width:60%;margin-top:30px;padding-bottom:30px;border-color:#a5a5a5;">
+                <input type="hidden" id="hidprotocal" name="hidprotocal" value="[% RAW_FORM('hidprotocal').html() %]" />
+                <input type="hidden" name="isrepair" value="0" />      
+                <div class="form-group">
+                    <button disabled id="docreatesite" class="btn" type="submit" style="background-color:#338fc6;" disabled>
+                        <b style="font-weight:600px;">Create Site</b>
+                    </button>
+                    <a class="btn" href="index.html" style="background-color:#b3b3b3;margin-left:10px;">
+                        <b style="font-weight:600px;">Cancel</b>
+                    </a>
+                </div>
+            </div>
+        </form>
+        <div class="">
+            <div>
+                <div class="alert alert-info">
+                    <span class="glyphicon glyphicon-info-sign"></span>
+                    <div class="alert-message" id="one-click-destructive-warning">
+                        <strong>Important:</strong>
+                        The installer will write files in the selected domain name’s document root. The installer will overwrite any existing file names matched with file names in part of RVsitebuilder Installation.
+                        <br>
+                        Or <a href="../subdomain/index.html" >Click here</a> for create sub domain.
+                    </div>
+                </div>
+            </div>
+        </div>
+    [% ELSE -%]
+        <div class="body-content">
+            <div class="alert alert-danger"></div>
+        </div>
+    [% END -%]
+
+    [% PROCESS '_assets/cjt2_header_include.tt' %]
+
+    [% BLOCK js_block %]
+        <script type="text/javascript">
+            // Wait for require.js to load using the new event, then load JQuery
+            window.addEventListener("library-loaded", function(e) {
+                if (e.detail.library.match(/requirejs/) ) {
+                    require(["jquery"], function($) {
+                        // Use jquery via $, example:
+                        //$(".navbar-header").css('background-color', '#0070BC');
+                        
+                        //check checkbox checked and textbox is null
+                        $( document ).ready(function() {
+                            if($('#submitoverwrite').prop('checked') == true && $('#submiteula').prop('checked') == true && $('#adminemail').val() != '' && $('#appname').val() != '') {
+                                $('#docreatesite').prop('disabled', false);
+                            }
+                            else {
+                                $('#docreatesite').prop('disabled', true);
+                            }   
+                        });
+
+                        $('#submitoverwrite').change(function() {
+                            if($(this).prop('checked') == true && $('#submiteula').prop('checked') == true && $('#adminemail').val() != '' && $('#appname').val() != '') {
+                                $('#docreatesite').prop('disabled', false);
+                            }
+                            else {
+                                $('#docreatesite').prop('disabled', true);
+                            }   
+                        });
+
+                        $('#submiteula').change(function() {
+                            if($(this).prop('checked') == true && $('#submitoverwrite').prop('checked') == true && $('#adminemail').val() != '' && $('#appname').val() != '') {
+                                $('#docreatesite').prop('disabled', false);
+                            }
+                            else {
+                                $('#docreatesite').prop('disabled', true);
+                            }   
+                        });
+                        
+                        //check textbox is null
+                        $("#adminemail").keyup(function(){
+                            if($(this).val() != ''  && $('#appname').val() != '' && $('#submitoverwrite').prop('checked') == true && $('#submiteula').prop('checked') == true){
+                                $('#docreatesite').prop('disabled', false);
+                            }
+                            else {
+                                $('#docreatesite').prop('disabled', true);
+                            }
+                        });
+
+                        $("#appname").keyup(function(){
+                            if($(this).val() != '' && $('#adminemail').val() != '' && $('#submitoverwrite').prop('checked') == true && $('#submiteula').prop('checked') == true){
+                                $('#docreatesite').prop('disabled', false);
+                            }
+                            else {
+                                $('#docreatesite').prop('disabled', true);
+                            }
+                        });
+                        
+                        //disable link click when click create site
+                        $('#docreatesite').click(function() {
+                            var overlay = $('<div id="overlay"><div class="centered" ><i class="fa fa-sync fa-spin" style="font-size:30px;color:#0077f9"></i><div style="color:white;padding-top:15px;"><span>Wait...</span></div></div></div>');
+                            overlay.appendTo(document.body)
+                        });
+                    });
+                }
+            });
+        </script>
+    [% END %]
+    
+    [% js_code = PROCESS js_block %]
+
+[% END #wrapper -%]

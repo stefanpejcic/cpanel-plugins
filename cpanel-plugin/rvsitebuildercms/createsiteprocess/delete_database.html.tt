@@ -1,0 +1,16 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    SET CPANEL.CPVAR.dprefix = "../";
+    SET dbname = RAW_FORM('dbname').html();
+%]
+
+[% SET dbdeleted = {} %]
+[% IF dbname != '' %]
+	[% dbdeleted = Uapi.exec("Mysql", "delete_database", {"name" => dbname} ); %]
+[% END %]
+
+
+
+[% dbdeleted.json() %]

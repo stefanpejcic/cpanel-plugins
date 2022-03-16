@@ -1,0 +1,177 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+
+    SET CPANEL.CPVAR.dprefix = "../";
+    SET has_feature = CPANEL.feature('rvsitebuildercms');
+    
+    SET domainname = RAW_FORM('selectdomainname').html();
+    SET publicpath = RAW_FORM('documentroot').html();
+    SET adminemail = RAW_FORM('adminemail').html();
+    SET appname = RAW_FORM('appname').html();
+    SET protocal = RAW_FORM('hidprotocal').html();
+    SET isrepair = RAW_FORM('isrepair').html();
+    SET iscloudlinux = Uapi.exec('RVsitebuilderCMS','isCloudlinux').data.is_cloudlinux;
+
+%]
+
+[% WRAPPER '_assets/master.html.tt'
+    #app_key = 'rvsitebuildercms'
+    #page_title = "RVsitebuilder"
+    include_legacy_stylesheets = 0
+    include_legacy_scripts = 0
+    include_cjt = 0
+    use_master_bootstrap = 0
+    page_js = js_code
+    page_stylesheets = []
+    page_scripts = []
+-%]
+    
+    [% IF has_feature %]
+
+    <style>
+        .body-content .alert {
+            width: 70%;
+            text-align: left;
+            margin: 0 auto;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            color: #444343;
+        }
+        .body-content .text-info {
+            color:#389bd8;
+        }
+        .cpanel_body {
+            max-width : 100%;
+        }
+        .full-height {
+            height: unset !important;
+            min-height: 15vh !important;
+        }
+        .min-h-screen{
+            min-height:35vh !important;
+        }
+
+        @media(min-width: 768px) {
+        .md\:min-h-screen{
+           min-height:35vh !important;
+        }
+        .md\:text-15xl {
+            font-size: 7rem !important;
+        }
+        }
+    </style>
+
+        <div class="body-content text-center">
+            <img src="image/loading.svg" style="padding-top:8%;padding-bottom:8%;width:15%;">
+            
+            [% SET valid = 1 %]
+            
+            [% IF isrepair == 0 %]        
+	            [% IF domainname == '' || publicpath == '' || adminemail == '' || appname == '' %]
+	                [% valid =  0 %]
+	                <div class="alert alert-info">
+	                    <span class="glyphicon glyphicon-info-sign"></span>
+	                    Parameter not complete
+	                </div>
+	            [% ELSE %]
+	                [% removed = Uapi.exec("RVsitebuilderCMS" , "remove_installer" ,    {'publicpath' => publicpath , 'force' => 1}); %]
+	                [% removed = Uapi.exec("RVsitebuilderCMS" , "remove_rvsitebuildercmsapppath" ,    {'domainname' => domainname}); %]
+	            [% END%]
+	      	[% END %]
+	      	
+	      	[% IF isrepair == 1 %]
+	      		[% IF domainname == '' || publicpath == '' %]
+	                [% valid =  0 %]
+	                <div class="alert alert-info">
+	                    <span class="glyphicon glyphicon-info-sign"></span>
+	                    Parameter not complete
+	                </div>
+	            [% ELSE %]
+	                [% removed = Uapi.exec("RVsitebuilderCMS" , "remove_installer" ,    {'publicpath' => publicpath , 'force' => 1}); %]
+	            [% END%]
+	      	[% END %]
+            
+            <div class="alert alert-info information_process" style="display:none;">
+                <span class="glyphicon glyphicon-info-sign"></span>
+            </div>
+            <div class="alert alert-danger error_process" style="display:none;">
+                <span class="glyphicon glyphicon-exclamation-sign"></span>
+                <br>
+                <span class="special_error_show"></span>
+                <br>
+                <a id="link_to_rv_kb" href="https://support.rvglobalsoft.com/hc/en-us/articles/360036055074-RVsitebuilder-Error-with-4xx-or-5xx-can-t-reslove-domain-">How to resolve problem</a>
+            </div>
+            <div id="processes">
+                <button type="button" class="btn" style="border-radius:15px;font-weight:600;color:#389bd8;background-color:#c7eaff;border-color:#389bd8;margin-top:-26px;">Hide Processes</button>
+                <input type="image" id="processes_icon" src="image/icon_hide.png" style="padding-left:5px;width:40px;">
+            </div>
+            <div id="processes_list" class="text-left" style="padding-left:7%;width:80%;margin-left:10%;margin-top:-21px;border: 1px solid #3bafded6;border-radius:10px;padding-top:30px;padding-bottom:30px;">
+                <div class="form-inline">
+                    <div style="width:19%" class="form-group">
+                        <i class="fa fa-spinner fa-spin check_license text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="check_license">Check License</span>
+                    </div>
+                    <div style="width:17%" class="form-group">
+                        <i class="fa fa-spinner fa-spin pre_check_php text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="pre_check_php">Pre check</span>
+                    </div>
+                    <div style="width:18%" class="form-group">
+                        <i class="fa fa-spinner fa-spin download_framework text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="download_framework">Download Framework</span>
+                    </div>
+                    <div style="width:20%" class="form-group">
+                        <i class="fa fa-spinner fa-spin download_common_pkg text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="download_common_pkg">Install Common Package</span>
+                    </div>
+                    <div style="width:20%" class="form-group">
+                        <i class="fa fa-spinner fa-spin finished_setup text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="finished_setup">Finished setup</span>
+                    </div>
+                </div>
+                <div class="form-inline" style="padding-top:5px;">
+                    <div style="width:19%" class="form-group">
+                        <i class="fa fa-spinner fa-spin disk_required text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="disk_required">Disk space required</span>
+                    </div>
+                    <div style="width:17%" class="form-group">
+                        <i class="fa fa-spinner fa-spin creat_ftpaccount text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="creat_ftpaccount">Create FTP account</span>
+                    </div>
+                    <div style="width:18%" class="form-group">
+                        <i class="fa fa-spinner fa-spin download_vendor text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="download_vendor">Download Vendor</span>
+                    </div>
+                    <div style="width:20%" class="form-group">
+                        <i class="fa fa-spinner fa-spin install_all_pkg text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="install_all_pkg">Install Framework</span>
+                    </div>
+                </div>
+                <div class="form-inline" style="padding-top:5px;">
+                    <div style="width:19%" class="form-group">
+                        <i class="fa fa-spinner fa-spin prepare_installer text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="prepare_installer">Prepare Installer</span>
+                    </div>
+                    <div style="width:17%" class="form-group">
+                        <i class="fa fa-spinner fa-spin create_database text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="create_database">Create Database</span>
+                    </div>
+                    <div style="width:18%" class="form-group">
+                        <i class="fa fa-spinner fa-spin setup_env text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="setup_env">Setup ENV</span>
+                    </div>
+                    <div style="width:20%" class="form-group">
+                        <i class="fa fa-spinner fa-spin artisan_call text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span class="artisan_call">Artisan Command</span>
+                    </div>
+                </div>
+                <div style="display:none;width:86%;padding-top:10px;" class="text-center">
+                    <i class="glyphicon glyphicon-time text-info" style="font-size: 12px;padding-left:5px;padding-right:5px;"></i> <span>Total execute time <span id="exectime">0</span> second.</span>
+                </div>
+            </div>
+        </div>
+    [% ELSE %]
+    
+        <div class="body-content">
+            <div class="alert alert-danger">
+            </div>
+        </div>
+    
+    [% END %]
+    
+
+[% PROCESS '_assets/cjt2_header_include.tt' %]
+
+[% BLOCK js_block %]
+    [% PROCESS rvsitebuildercms/ajax_createsite_process.html.tt %]
+[% END %]
+[% js_code = PROCESS js_block %]
+[% END #wrapper -%]

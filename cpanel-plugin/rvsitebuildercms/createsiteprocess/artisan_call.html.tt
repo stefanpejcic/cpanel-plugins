@@ -1,0 +1,20 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    
+    SET CPANEL.CPVAR.dprefix = "../";
+    
+    SET domainname = RAW_FORM('domainname').html();
+    SET tokenkey = RAW_FORM('tokenkey').html(); 
+    SET publicpath = RAW_FORM('publicpath').html();
+    SET protocal = RAW_FORM('protocal').html();
+    SET adminemail = RAW_FORM('adminemail').html();
+    SET isrepair = RAW_FORM('isrepair').html();
+%]
+
+
+[% artisancall = Uapi.exec("RVsitebuilderCMS" , "artisan_call" ,    { 'domainname' => domainname,'publicpath' => publicpath,'tokenkey' => tokenkey,'protocal' => protocal,'adminemail' => adminemail, 'isrepair' => isrepair}); %]
+[% artisancall.json() %]                           
+                            
+                            

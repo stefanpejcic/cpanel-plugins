@@ -1,0 +1,182 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+
+    SET CPANEL.CPVAR.dprefix = "../";
+    
+    SET domainname = RAW_FORM('domainname').html();
+    SET publicpath = RAW_FORM('publicpath').html();
+    SET list_all_domain = Uapi.exec('DomainInfo', 'domains_data', { format => 'hash' });
+    SET listsite = Uapi.exec( 'RVsitebuilderCMS', 'list_website');
+
+%]
+
+
+[% WRAPPER '_assets/master.html.tt'
+    app_key = 'rvsitebuildercms'
+    page_title = "RVsitebuilder"
+    include_legacy_stylesheets = 0
+    include_legacy_scripts = 0
+    include_cjt = 0
+    use_master_bootstrap = 0
+    page_stylesheets = []
+-%]
+    
+    
+        
+        <div class="body-content">
+            
+            <p class="description">
+                RV Debug
+            </p>
+            
+     
+            
+            <section>
+            <div class="row">
+                    <div class="col col-lg-4">
+                        <a  id="" class="" href="http://[% domainname %]/rvsitebuilder/rvdebug.php" target="_blank">
+                            rv debug
+                        </a>
+                    </div>
+             </div>
+             <div class="row">
+                    <div class="col col-lg-4">
+                        <a  id="" class="" href="http://[% domainname %]/rvsitebuilder/install_log.txt" target="_blank">
+                            install log
+                        </a>
+                    </div>
+             </div>
+             <div class="row">
+                    <div class="col col-lg-4">
+                        <a  id="" class="" href="http://[% domainname %]/rvsitebuilder/error_log" target="_blank">
+                            error log
+                        </a>
+                    </div>
+            </div>
+             <div class="row">
+                    <div class="col col-lg-4">
+                        <a  id="" class="" href="http://[% domainname %]/rvsitebuilder_install_log.txt" target="_blank">
+                            install log after installed
+                        </a>
+                    </div>
+            </div>
+             <div class="row">
+                    <div class="col col-lg-4">
+                        <a  id="" class="" href="http://[% domainname %]/rvsitebuilder_install_error_log.txt" target="_blank">
+                            error log after installes
+                        </a>
+                    </div>
+            </div>
+            </section>
+            
+            <br>
+            <section>
+            
+                    <div class="row">
+                         <div class="form-group">
+                                <div class="col-lg-6" align="">
+                                    <form action="rvdebug_edit_file.html" name="" id=""  method="post" enctype="multipart/form-data">
+                                        <input type="hidden" id="" name="domainname" value="[% list_all_domain.data.main_domain.domain %]" />
+                                        <input type="hidden" id="" name="publicpath"    value="[% list_all_domain.data.main_domain.documentroot %]" />
+                                        <input type="hidden" id="" name="action" value="edit_install_config" />     
+                                        <div class="form-group">
+                                            <input   id="" class="btn btn-primary" type="submit" value="Edit Install Config for [% list_all_domain.data.main_domain.domain %]"/>
+                                        </div>
+                                     </form>
+                                </div>
+                                <div class="col-lg-6" align="">
+                                     [% FOREACH list IN listsite.data.list_website %]
+                                        [% IF list.sitename == list_all_domain.data.main_domain.domain %]
+                                            <form action="rvdebug_edit_file.html" name="" id=""  method="post" enctype="multipart/form-data">
+                                                <input type="hidden" id="" name="domainname" value="[% list_all_domain.data.main_domain.domain %]" />
+                                                <input type="hidden" id="" name="publicpath"    value="[% list_all_domain.data.main_domain.documentroot %]" />
+                                                <input type="hidden" id="" name="action" value="edit_site_env" />     
+                                                <div class="form-group">
+                                                    <input   id="" class="btn btn-primary" type="submit" value="Edit Website ENV for [% list_all_domain.data.main_domain.domain %]"/>
+                                                </div>
+                                             </form>
+                                        [% END %]
+                                     [% END %]
+                                </div>
+                         </div>
+                    </div>
+                 
+                                           
+                
+                <div class="row">
+                     <div class="form-group">
+                            [% FOREACH q IN list_all_domain.data.sub_domains %]
+                                <div class="col-lg-6" align="">      
+                                     <form action="rvdebug_edit_file.html" name="" id=""  method="post" enctype="multipart/form-data">
+                                        <input type="hidden" id="" name="domainname" value="[% q.domain %]" />
+                                        <input type="hidden" id="" name="publicpath"    value="[% q.documentroot %]" />
+                                        <input type="hidden" id="" name="action" value="edit_install_config" />     
+                                        <div class="form-group">
+                                            <input   id="" class="btn btn-primary" type="submit" value="Edit Install Config for [% q.domain %]"/>
+                                        </div>
+                                     </form>
+                                </div>
+                                <div class="col-lg-6" align="">  
+                                     [% FOREACH list IN listsite.data.list_website %]
+                                        [% IF list.sitename == q.domain %]
+                                            <form action="rvdebug_edit_file.html" name="" id=""  method="post" enctype="multipart/form-data">
+                                                <input type="hidden" id="" name="domainname" value="[% q.domain %]" />
+                                                <input type="hidden" id="" name="publicpath"    value="[% q.documentroot %]" />
+                                                <input type="hidden" id="" name="action" value="edit_site_env" />     
+                                                <div class="form-group">
+                                                    <input   id="" class="btn btn-primary" type="submit" value="Edit Website ENV for [% q.domain %]"/>
+                                                </div>
+                                             </form>
+                                        [% END %]
+                                     [% END %]
+                                </div>
+                            [% END %]
+                     </div>
+                </div>
+                
+                <div class="row">
+                     <div class="form-group">
+                            [% FOREACH q IN list_all_domain.data.addon_domains %]
+                                <div class="col-lg-6" align="">   
+                                     <form action="rvdebug_edit_file.html" name="" id=""  method="post" enctype="multipart/form-data">
+                                        <input type="hidden" id="" name="domainname" value="[% q.domain %]" />
+                                        <input type="hidden" id="" name="publicpath"    value="[% q.documentroot %]" />
+                                        <input type="hidden" id="" name="action" value="edit_install_config" />     
+                                        <div class="form-group">
+                                            <input   id="" class="btn btn-primary" type="submit" value="Edit Install Config for [% q.domain %]"/>
+                                        </div>
+                                     </form>
+                                </div>
+                                <div class="col-lg-6" align=""> 
+                                     [% FOREACH list IN listsite.data.list_website %]
+                                        [% IF list.sitename == q.domain %]
+                                            <form action="rvdebug_edit_file.html" name="" id=""  method="post" enctype="multipart/form-data">
+                                                <input type="hidden" id="" name="domainname" value="[% q.domain %]" />
+                                                <input type="hidden" id="" name="publicpath"    value="[% q.documentroot %]" />
+                                                <input type="hidden" id="" name="action" value="edit_site_env" />     
+                                                <div class="form-group">
+                                                    <input   id="" class="btn btn-primary" type="submit" value="Edit Website ENV for [% q.domain %]"/>
+                                                </div>
+                                             </form>
+                                        [% END %]
+                                     [% END %]
+                                </div>
+                            [% END %]
+                     </div>
+                </div>
+                
+                <a  id="" class="btn btn-secondary" href="index.html">Back</a>
+            
+            </section>
+            
+        
+        
+        </div>
+    
+        [% PROCESS '_assets/cjt2_header_include.tt' %]
+   
+    
+
+[% END #wrapper -%]

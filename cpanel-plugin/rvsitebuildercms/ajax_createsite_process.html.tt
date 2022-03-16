@@ -1,0 +1,583 @@
+<script type="text/javascript">
+    // Wait for require.js to load using the new event, then load JQuery
+    window.addEventListener("library-loaded", function(e) {
+        if (e.detail.library.match(/requirejs/) ) {
+            require(["jquery"], function($) {
+                    var valid = [% valid %];
+                    var isrepair = [% isrepair %];
+                    var tokenkey = '';
+                    var ftpuser = '';
+                    var ftppassword = '';
+                    var ftpport   = '';
+                    var ftpserver = '';
+                    var dbname = '';
+                    var dbuser = '';
+                    var dbpassword = ''
+                    var param = {};
+                    
+                    
+                    if(valid == 1) {
+                        doAnAjax('createsiteprocess/check_license.html',param,'GET', function(error, data) {
+                            console.log(data);
+                            valid =  ( data !== null && data.data.check_license !== null) ? data.data.check_license : 0 ;
+                            if(valid == 1) {
+                                $('i.check_license').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                $(".information_process").fadeOut(5000);
+                            }else {
+                                $(".error_process").fadeIn("slow");
+                                $('i.check_license').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                if(data != null){
+                                    $('.error_process').html( $('.error_process').html()+'- Check License : '+data.data.reason+ '<br>' );
+                                    showkblinkdata(data);
+                                }
+                                else if(error != null){
+                                    $('.error_process').html( $('.error_process').html()+'- Check License : '+error.statusText+ '<br>' );
+                                    showkblinkerror(error);
+                                }
+                            }
+                            $('span.check_license').attr('title', (typeof data.data.exectime == 'undefined') ? 0  : data.data.exectime + ' s');
+                            $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                            
+                            
+                            if(valid == 1) {
+                                doAnAjax('createsiteprocess/disk_required.html',param,'GET', function(error, data) {
+                                    console.log(data);
+                                    valid =  ( data !== null && data.data.disk_required !== null) ? data.data.disk_required : 0 ;
+                                    if(valid == 1) {
+                                        $('i.disk_required').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                        $(".information_process").fadeOut(5000);
+                                    }else {
+                                        $(".error_process").fadeIn("slow");
+                                        $('i.disk_required').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                        if(data != null){
+                                            $('.error_process').html('- Disk space required : '+data.data.reason+'<br>' + $('.error_process').html());
+                                            showkblinkdata(data);
+                                        }
+                                        else if(error != null){
+                                            $('.error_process').html('- Disk space required : '+error.statusText+'<br>' + $('.error_process').html() );
+                                            showkblinkerror(error);
+                                        }
+                                        
+                                    }
+                                    $('span.disk_required').attr('title', (typeof data.data.exectime == 'undefined') ? 0  : data.data.exectime + ' s');
+                                    $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                            		
+                                            
+                                            if(valid == 1) {
+                                                param = {publicpath:'[% publicpath %]',domainname:'[% domainname %]',protocal:'[% protocal %]'};
+                                                doAnAjax('createsiteprocess/prepare_installer.html',param,'GET', function(error, data) {
+                                                    console.log(data);
+                                                    valid =  ( data !== null && data.data.prepare_installer !== null) ? data.data.prepare_installer : 0 ;
+                                                    if(valid == 1) {
+                                                        tokenkey = data.data.rvsb_installing_token;
+                                                        $('i.prepare_installer').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                        $(".information_process").fadeOut(5000);
+                                                    }else {
+                                                        $(".error_process").fadeIn("slow");
+                                                        $('i.prepare_installer').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                                        if(data != null){
+                                                            $('.error_process').html( '- Prepare Installer : '+data.data.reason+'<br>'  + $('.error_process').html());
+                                                            //spacial for 301 302
+                                                            if(data.data.response.includes("301") || data.data.response.includes("302")) {
+                                                                //alink = jQuery(data.data.page).find('a').attr('href');
+                                                                alink = 'https://support.rvglobalsoft.com/hc/en-us/articles/360036051834-RVsitebuilder-Error-htaccess-301-302-when-click-Create-new-site-in-RVsitebuilder7-cPanel';
+                                                                $('.special_error_show').text('The document has redirect to '+ alink);
+                                                            }
+                                                            showkblinkdata(data);
+                                                        }
+                                                        else if(error != null){
+                                                            $('.error_process').html( '- Prepare Installer : '+error.statusText+'<br>'  + $('.error_process').html());
+                                                            showkblinkerror(error);
+                                                        }
+                                                        
+                                                        
+                                                    }
+                                                    $('span.prepare_installer').attr('title', (typeof data.data.exectime == 'undefined') ? 0  : data.data.exectime + ' s');
+                                                    $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                                                    
+                                                    
+                                                    if(valid == 1) {
+                                                        param = {publicpath:'[% publicpath %]',domainname:'[% domainname %]',tokenkey:tokenkey,protocal:'[% protocal %]' };
+                                                        doAnAjax('createsiteprocess/pre_check_php.html',param,'GET', function(error, data) {
+                                                            console.log(data);
+                                                            valid =  ( data !== null && data.data.pre_check_php !== null) ? data.data.pre_check_php : 0 ;
+                                                            var httpasuser = data.data.httpasuser;
+                                                            if(valid == 1) {
+                                                                $('i.pre_check_php').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                                $(".information_process").fadeOut(5000);
+                                                            }else {
+                                                                $(".error_process").fadeIn("slow");
+                                                                $('i.pre_check_php').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                                                if(data != null){
+                                                                    $('.error_process').html( '- Pre check : '+data.data.reason+'<br>' + $('.error_process').html() );
+                                                                    showkblinkdata(data);
+                                                                }
+                                                                else if(error != null){
+                                                                    $('.error_process').html( '- Pre check : '+error.statusText+'<br>' + $('.error_process').html() );
+                                                                    showkblinkerror(error);
+                                                                }
+                                                                
+                                                            }
+                                                            $('span.pre_check_php').attr('title', (typeof data.data.exectime == 'undefined') ? 0  : data.data.exectime + ' s');
+                                                            $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                                                    		
+                                                            
+                                                            if(valid == 1) {
+                                                                param = {httpuser : httpasuser , isrepair : isrepair};
+                                                                doAnAjax('createsiteprocess/create_ftpaccount.html',param,'GET', function(error, data) {
+                                                                    console.log(data);
+                                                                    valid =  ( data !== null && data.valid !== null) ? data.valid : 0 ;
+                                                                    if(valid == 1 && httpasuser == 'false') {
+                                                                        ftpuser = data.ftpuser+'@[% domainname %]';
+                                                                        ftppassword = data.ftppassword;
+                                                                        ftpport   = '21';
+                                                                        ftpserver = 'ftp.[% domainname %]';
+                                                                        $('i.creat_ftpaccount').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                                        $(".information_process").fadeOut(5000);
+                                                                    }else if(valid == 1 && (httpasuser == true || httpasuser == 1)) {
+                                                                        $(".information_process").fadeIn("slow");
+                                                                        $('.information_process').html( $('.information_process').html()+'- Create FTP account : '+data.reason+'<br>' );
+                                                                        $('i.creat_ftpaccount').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                                        $(".information_process").fadeOut(5000);
+                                                                    }else {
+                                                                        if(data != null){
+                                                                            showkblinkdata(data);
+                                                                        }
+                                                                        else if(error != null){
+                                                                            showkblinkerror(error);
+                                                                        }
+                                                                        $(".error_process").fadeIn("slow");
+                                                                        $('.error_process').html( $('.error_process').html()+'- Create FTP account : '+data.error+'<br>' );
+                                                                        $('i.creat_ftpaccount').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                                                    }
+                                                                    $('span.creat_ftpaccount').attr('title', (typeof data.exectime == 'undefined') ? 0  : data.exectime + ' s');
+                                                                    $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.exectime == 'undefined') ? 0 : data.exectime));
+                                                                    
+                                                                    
+                                                                    if(valid == 1) {
+                                                                    	param = {isrepair : isrepair};
+                                                                        doAnAjax('createsiteprocess/create_database.html',param,'GET', function(error, data) {
+                                                                            console.log(data);
+                                                                            valid =  ( data !== null && data.valid !== null) ? data.valid : 0 ;
+                                                                            if(valid == 1) {
+                                                                                dbname = data.dbname;
+                                                                                dbuser = data.dbuser;
+                                                                                dbpassword = data.dbpassword;
+                                                                                $('i.create_database').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                                                $(".information_process").fadeOut(5000);
+                                                                            }else {
+                                                                                $(".error_process").fadeIn("slow");
+                                                                                $('.error_process').html( $('.error_process').html()+'- Create Database : '+data.txterror+'<br>' );
+                                                                                $('i.create_database').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                                                            	
+                                                                            	param = {ftpuser:ftpuser,destroy:0};
+                                                                                doAnAjax('createsiteprocess/delete_ftp_user.html',param,'GET', function(error, data) {});
+                                                                            }
+                                                                            $('span.create_database').attr('title',(typeof data.exectime == 'undefined') ? 0  : data.exectime + ' s');
+                                                                            $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.exectime == 'undefined') ? 0 : data.exectime));
+                                                                            
+                                                                            
+                                                                            if(valid == 1) {
+                                                                                param = {publicpath:'[% publicpath %]',domainname:'[% domainname %]',tokenkey:tokenkey,protocal:'[% protocal %]'};
+                                                                                doAnAjax('createsiteprocess/download_framework.html',param,'GET', function(error, data) {
+                                                                                    console.log(data);
+                                                                                    valid =  ( data !== null && data.data.download_framework !== null) ? data.data.download_framework : 0 ;
+                                                                                    if(valid == 1) {
+                                                                                        $('i.download_framework').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                                                        $(".information_process").fadeOut(5000);
+                                                                                    }else {
+                                                                                        $(".error_process").fadeIn("slow");
+                                                                                        $('i.download_framework').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                                                                        if(data != null){
+                                                                                            $('.error_process').html( '- Download Framework : '+data.data.reason+'<br>' + $('.error_process').html() );
+                                                                                            showkblinkdata(data);
+                                                                                        }
+                                                                                        else if(error != null){
+                                                                                            $('.error_process').html( '- Download Framework : '+error.statusText+'<br>' + $('.error_process').html() );
+                                                                                            showkblinkerror(error);
+                                                                                        }
+                                                                                    	
+                                                                                    	param = {'ftpuser':ftpuser,'destroy':0};
+                                                                                		doAnAjax('createsiteprocess/delete_ftp_user.html',param,'GET', function(error, data) {});
+                                                                                		param = {'dbname':dbname};
+                                                                                		doAnAjax('createsiteprocess/delete_database.html',param,'GET', function(error, data) {});
+                                                                                    	param = {'dbuser':dbuser};
+                                                                                		doAnAjax('createsiteprocess/delete_db_user.html',param,'GET', function(error, data) {});
+                                                                                    }
+                                                                                    $('span.download_framework').attr('title', (typeof data.data.exectime == 'undefined') ? 0  : data.data.exectime + ' s');
+                                                                                    $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                                                                            		
+                                                                                    
+                                                                                    if(valid == 1) {
+                                                                                        param = {publicpath:'[% publicpath %]',domainname:'[% domainname %]',tokenkey:tokenkey,protocal:'[% protocal %]'};
+                                                                                        doAnAjax('createsiteprocess/download_vendor.html',param,'GET', function(error, data) {
+                                                                                            console.log(data);
+                                                                                            valid =  ( data !== null && data.data.download_vendor !== null) ? data.data.download_vendor: 0 ;
+                                                                                            if(valid == 1) {
+                                                                                                $('i.download_vendor').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                                                                $(".information_process").fadeOut(5000);
+                                                                                            }else {
+                                                                                                $(".error_process").fadeIn("slow");
+                                                                                                $('i.download_vendor').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                                                                                if(data != null){
+                                                                                                    $('.error_process').html('- Download Vendor : '+data.data.reason+'<br>' + $('.error_process').html() );
+                                                                                                    showkblinkdata(data);
+                                                                                                }
+                                                                                                else if(error != null){
+                                                                                                    $('.error_process').html('- Download Vendor : '+error.statusText+'<br>' + $('.error_process').html() );
+                                                                                                    showkblinkerror(error);
+                                                                                                }
+                                                                                                
+                                                                                                
+                                                                                                param = {'ftpuser':ftpuser,'destroy':0};
+		                                                                                		doAnAjax('createsiteprocess/delete_ftp_user.html',param,'GET', function(error, data) {});
+		                                                                                		param = {'dbname':dbname};
+		                                                                                		doAnAjax('createsiteprocess/delete_database.html',param,'GET', function(error, data) {});
+		                                                                                    	param = {'dbuser':dbuser};
+		                                                                                		doAnAjax('createsiteprocess/delete_db_user.html',param,'GET', function(error, data) {});
+                                                                                            }
+                                                                                            $('span.download_vendor').attr('title', (typeof data.data.exectime == 'undefined') ? 0  : data.data.exectime + ' s');
+                                                                                            $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                                                                                            
+                                                                                            
+                                                                                            if(valid == 1) {
+                                                                                                param = {   domainname:'[% domainname %]',
+                                                                                                            tokenkey:tokenkey,
+                                                                                                            publicpath:'[% publicpath %]',
+                                                                                                            fulldbname:dbname,
+                                                                                                            fulldbuser:dbuser,
+                                                                                                            dbpasswd:dbpassword,
+                                                                                                            ftpaccount:ftpuser,
+                                                                                                            ftppassword:ftppassword,
+                                                                                                            ftpport:ftpport,
+                                                                                                            ftpserver:ftpserver,
+                                                                                                            appname:'[% appname %]',
+                                                                                                            protocal:'[% protocal %]',
+                                                                                                            reqtype:'post',
+                                                                                                            isrepair : isrepair
+                                                                                                        };
+                                                                                                doAnAjax('createsiteprocess/setup_env.html',param,'GET', function(error, data) {
+                                                                                                    console.log(data);
+                                                                                                    valid =  ( data !== null && data.data.setup_env !== null) ? data.data.setup_env: 0 ;
+                                                                                                    if(valid == 1) {
+                                                                                                        $('i.setup_env').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                                                                        $(".information_process").fadeOut(5000);
+                                                                                                    }else {
+                                                                                                        $(".error_process").fadeIn("slow");
+                                                                                                        $('i.setup_env').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                                                                                        if(data != null){
+                                                                                                            $('.error_process').html( '- Setup ENV : '+data.data.reason+'<br>' + $('.error_process').html() );
+                                                                                                            showkblinkdata(data);
+                                                                                                        }
+                                                                                                        else if(error != null){
+                                                                                                            $('.error_process').html( '- Setup ENV : '+error.statusText+'<br>' + $('.error_process').html() );
+                                                                                                            showkblinkerror(error);
+                                                                                                        }
+                                                                                                        
+                                                                                                        param = {'ftpuser':ftpuser,'destroy':0};
+				                                                                                		doAnAjax('createsiteprocess/delete_ftp_user.html',param,'GET', function(error, data) {});
+				                                                                                		param = {'dbname':dbname};
+				                                                                                		doAnAjax('createsiteprocess/delete_database.html',param,'GET', function(error, data) {});
+				                                                                                    	param = {'dbuser':dbuser};
+				                                                                                		doAnAjax('createsiteprocess/delete_db_user.html',param,'GET', function(error, data) {});
+                                                                                                    }
+																									$('span.setup_env').attr('title', (typeof data.data.exectime == 'undefined') ? 0  : data.data.exectime + ' s');                                                                                                 
+																									$('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                                                                                                    
+                                                                                                    
+                                                                                                    if(valid == 1) {
+                                                                                                        param = {domainname:'[% domainname %]',tokenkey:tokenkey,publicpath:'[% publicpath %]',protocal:'[% protocal %]'};
+                                                                                                        doAnAjax('createsiteprocess/download_common_pkg.html',param,'GET', function(error, data) {
+                                                                                                            console.log(data);
+                                                                                                            valid =  ( data !== null && data.data.download_common_pkg !== null) ? data.data.download_common_pkg : 0 ;
+                                                                                                            if(valid == 1) {
+                                                                                                                $('i.download_common_pkg').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                                                                                $(".information_process").fadeOut(5000);
+                                                                                                            }else {
+                                                                                                                $(".error_process").fadeIn("slow");
+                                                                                                                    $('i.download_common_pkg').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                                                                                                if(data != null){
+                                                                                                                    $('.error_process').html( '- Install Common Package : '+data.data.reason+'<br>' + $('.error_process').html() );
+                                                                                                                    showkblinkdata(data);
+                                                                                                                }
+                                                                                                                else if(error != null){
+                                                                                                                    $('.error_process').html( '- Install Common Package : '+error.statusText+'<br>' + $('.error_process').html() );
+                                                                                                                    showkblinkdata(data);
+                                                                                                                    showkblinkerror(error);
+                                                                                                                }
+                                                                                                                
+                                                                                                            	param = {'ftpuser':ftpuser,'destroy':0};
+						                                                                                		doAnAjax('createsiteprocess/delete_ftp_user.html',param,'GET', function(error, data) {});
+						                                                                                		param = {'dbname':dbname};
+						                                                                                		doAnAjax('createsiteprocess/delete_database.html',param,'GET', function(error, data) {});
+						                                                                                    	param = {'dbuser':dbuser};
+						                                                                                		doAnAjax('createsiteprocess/delete_db_user.html',param,'GET', function(error, data) {});
+                                                                                                            }
+                                                                                                            $('span.download_common_pkg').attr('title', (typeof data.data.exectime == 'undefined') ? 0  : data.data.exectime + ' s'); 
+                                                                                                            $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                                                                                                            
+                                                                                                            
+                                                                                                            if(valid == 1) {
+                                                                                                                param = {   domainname:'[% domainname %]',
+                                                                                                                            tokenkey:tokenkey,
+                                                                                                                            publicpath:'[% publicpath %]',
+                                                                                                                            ftpaccount:ftpuser,
+                                                                                                                            ftppassword:ftppassword,
+                                                                                                                            ftpport:ftpport,
+                                                                                                                            ftpserver:ftpserver,
+                                                                                                                            protocal:'[% protocal %]',
+                                                                                                                            reqtype:'post',
+                                                                                                                            isrepair : isrepair
+                                                                                                                        };
+                                                                                                                doAnAjax('createsiteprocess/install_all_pkg.html',param,'GET', function(error, data) {
+                                                                                                                    console.log(data);
+                                                                                                                    valid =  ( data !== null && data.data.install_all_pkg !== null) ? data.data.install_all_pkg : 0 ;
+                                                                                                                    if(valid == 1) {
+                                                                                                                        $('i.install_all_pkg').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                                                                                        $(".information_process").fadeOut(5000);
+                                                                                                                    }else {
+                                                                                                                        $(".error_process").fadeIn("slow");
+                                                                                                                        $('i.install_all_pkg').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                                                                                                        if(data != null){
+                                                                                                                            $('.error_process').html( '- Install Framework : '+data.data.reason+'<br>' + $('.error_process').html() );
+                                                                                                                            showkblinkdata(data);
+                                                                                                                        }
+                                                                                                                        else if(error != null){
+                                                                                                                            $('.error_process').html( '- Install Framework : '+error.statusText+'<br>' + $('.error_process').html() );
+                                                                                                                            showkblinkerror(error);
+                                                                                                                        }
+                                                                                                                        
+                                                                                                                    	param = {'ftpuser':ftpuser,'destroy':0};
+								                                                                                		doAnAjax('createsiteprocess/delete_ftp_user.html',param,'GET', function(error, data) {});
+								                                                                                		param = {'dbname':dbname};
+								                                                                                		doAnAjax('createsiteprocess/delete_database.html',param,'GET', function(error, data) {});
+								                                                                                    	param = {'dbuser':dbuser};
+								                                                                                		doAnAjax('createsiteprocess/delete_db_user.html',param,'GET', function(error, data) {});
+								                                                                                		
+                                                                                                                    }
+                                                                                                                    $('span.install_all_pkg').attr('title', (typeof data.data.exectime == 'undefined') ? 0  : data.data.exectime + ' s'); 
+                                                                                                                    $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                                                                                                                    
+                                                                                                                    
+                                                                                                                    if(valid == 1) {
+                                                                                                                        param = {domainname:'[% domainname %]',tokenkey:tokenkey,publicpath:'[% publicpath %]',protocal:'[% protocal %]' ,adminemail:'[% adminemail %]',isrepair : isrepair};
+                                                                                                                        doAnAjax('createsiteprocess/artisan_call.html',param,'GET', function(error, data) {
+                                                                                                                            console.log(data);
+                                                                                                                            valid =  ( data !== null && data.data.artisan_call !== null) ? data.data.artisan_call : 0 ;
+                                                                                                                            if(valid == 1) {
+                                                                                                                                $('i.artisan_call').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                                                                                                $(".information_process").fadeOut(5000);
+                                                                                                                            }else {
+                                                                                                                                $(".error_process").fadeIn("slow");
+                                                                                                                                $('i.artisan_call').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                                                                                                                if(data != null){
+                                                                                                                                    $('.error_process').html( '- Artisan Command : '+data.data.reason+'<br>' + $('.error_process').html() );
+                                                                                                                                    showkblinkdata(data);
+                                                                                                                                }
+                                                                                                                                else if(error != null){
+                                                                                                                                    $('.error_process').html( '- Artisan Command : '+error.statusText+'<br>' + $('.error_process').html() );
+                                                                                                                                    showkblinkerror(error);
+                                                                                                                                }
+                                                                                                                                
+                                                                                                                            	param = {'ftpuser':ftpuser,'destroy':0};
+										                                                                                		doAnAjax('createsiteprocess/delete_ftp_user.html',param,'GET', function(error, data) {});
+										                                                                                		param = {'dbname':dbname};
+										                                                                                		doAnAjax('createsiteprocess/delete_database.html',param,'GET', function(error, data) {});
+										                                                                                    	param = {'dbuser':dbuser};
+										                                                                                		doAnAjax('createsiteprocess/delete_db_user.html',param,'GET', function(error, data) {});
+										                                                                                		
+                                                                                                                            }
+                                                                                                                            $('span.artisan_call').attr('title', (typeof data.data.exectime == 'undefined') ? 0  : data.data.exectime + ' s'); 
+                                                                                                                            $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                                                                                                                            
+                                                                                                                            
+                                                                                                                            if(valid == 1) {
+                                                                                                                                param = {domainname:'[% domainname %]',
+                                                                                                                                         tokenkey:tokenkey,
+                                                                                                                                         publicpath:'[% publicpath %]',
+                                                                                                                                         ftpaccount:ftpuser,
+                                                                                                                                         ftppassword:ftppassword,
+                                                                                                                                         ftpport:ftpport,
+                                                                                                                                         ftpserver:ftpserver,
+                                                                                                                                         protocal:'[% protocal %]',
+                                                                                                                                         reqtype:'post'
+                                                                                                                                         };
+                                                                                                                                doAnAjax('createsiteprocess/finished_setup.html',param,'GET', function(error, data) {
+                                                                                                                                    console.log(data);
+                                                                                                                                    valid =  ( data !== null && data.data.finished_setup !== null) ? data.data.finished_setup : 0 ;
+                                                                                                                                    if(valid == 1) {
+                                                                                                                                        $('i.finished_setup').removeClass("fa fa-spinner fa-spin").addClass("glyphicon glyphicon-ok-circle");
+                                                                                                                                        $(".information_process").fadeOut(5000);
+                                                                                                                                    }else {
+                                                                                                                                        $(".error_process").fadeIn("slow");
+                                                                                                                                        $('i.finished_setup').removeClass("fa fa-spinner fa-spin text-info").addClass("glyphicon glyphicon-remove-circle text-danger");
+                                                                                                                                        if(data != null){
+                                                                                                                                            $('.error_process').html( '- Finished setup : '+data.data.reason+'<br>' + $('.error_process').html() );
+                                                                                                                                            showkblinkdata(data);
+                                                                                                                                        }
+                                                                                                                                        else if(error != null){
+                                                                                                                                            $('.error_process').html( '- Finished setup : '+error.statusText+'<br>' + $('.error_process').html() );
+                                                                                                                                            showkblinkerror(error);
+                                                                                                                                        }
+                                                                                                                                        
+                                                                                                                                    	param = {'ftpuser':ftpuser,'destroy':0};
+												                                                                                		doAnAjax('createsiteprocess/delete_ftp_user.html',param,'GET', function(error, data) {});
+												                                                                                		param = {'dbname':dbname};
+												                                                                                		doAnAjax('createsiteprocess/delete_database.html',param,'GET', function(error, data) {});
+												                                                                                    	param = {'dbuser':dbuser};
+												                                                                                		doAnAjax('createsiteprocess/delete_db_user.html',param,'GET', function(error, data) {});
+												                                                                                		
+                                                                                                                                    }
+                                                                                                                                    $('span.finished_setup').attr('title', (typeof data.data.exectime == 'undefined') ? 0  : data.data.exectime + ' s'); 
+                                                                                                                                    $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                                                                                                                                    
+                                                                                                                                    
+                                                                                                                                    param = {publicpath:'[% publicpath %]',domainname:'[% domainname %]',tokenkey:tokenkey,protocal:'[% protocal %]'};
+                                                                                                                                    doAnAjax('createsiteprocess/remove_installer_api.html',param,'GET', function(error, data) {
+                                                                                                                                        console.log(data);
+                                                                                                                                        $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                                                                                                                                    });
+                                                                                                                                    param = {publicpath:'[% publicpath %]'};
+                                                                                                                                    doAnAjax('createsiteprocess/remove_installer_path.html',param,'GET', function(error, data) {
+                                                                                                                                        console.log(data);
+                                                                                                                                        $('#exectime').text( parseFloat($('#exectime').text()) +  parseFloat((typeof data.data.exectime == 'undefined') ? 0 : data.data.exectime));
+                                                                                                                                    });
+                                                                                                                                    
+                                                                                                                                    if(valid == 1) {
+                                                                                                                                        param = {adminemail:'[% adminemail %]',dbname:dbname,dbuser:dbuser,dbpassword:dbpassword,isrepair:isrepair,domainname:'[% domainname %]'};
+                                                                                                                                        doAnAjax('createsiteprocess/redirect_to_site.html',param,'GET', function(error, data) {
+                                                                                                                                            console.log(data);
+                                                                                                                                            
+                                                                                                                                            var redirecturl = '[% protocal %][% domainname %]/login/enduser/sso?token='+data.data.redirect_token ;
+                                                                                                                                            
+                                                                                                                                            //add button link to editsite
+                                                                                                                                            $('#edityoursite').removeClass('hidden')
+                                                                                                                                            .attr("href", redirecturl);
+                                                                                                                                            
+                                                                                                                                            //redirect
+                                                                                                                                            window.open(redirecturl,'_self');
+                                                                                                                                        }); 
+                                                                                                                                    }
+                                                                                                                                      
+                                                                                                                                    
+                                                                                                                                    
+                                                                                                                                }); 
+                                                                                                                            }
+                                                                                                                            
+                                                                                                                        }); 
+                                                                                                                    }
+                                                                                                                    
+                                                                                                                }); 
+                                                                                                            }
+                                                                                                            
+                                                                                                        }); 
+                                                                                                    }
+                                                                                                }); 
+                                                                                            }
+                                                                                        }); 
+                                                                                    }
+                                                                                }); 
+                                                                            }
+                                                                        }); 
+                                                                    }
+                                                                }); 
+                                                            }
+                                                        }); 
+                                                    }
+                                                    
+                                                }); 
+                                            }
+                                            
+                                    
+                                });
+                            }
+                        }); 
+           
+                    }
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                   
+                    
+                    function doAnAjax(url,param,type,callback) {
+                        $.ajax({
+                            url : url,
+                            data : param,
+                            cache : false,
+                            type : type,
+                            dataType: "json",
+                            error : function(error) {
+                                console.log(error);
+                                callback(error, null);
+                            },
+                            success : function(data) {
+                                callback(null, data);
+                            },
+                            timeout: 400000
+                        });
+                    }
+
+                    $('#processes_icon').click(function(){
+                        var current_status = $('#processes .btn').text();
+                        if(current_status=='Hide Processes'){
+                            $('#processes_list').hide();
+                            $('#processes .btn').text('Show Processes');
+                            $('#processes input[type="image"]').attr("src" , "image/icon_show.png");
+                        }else{
+                            $('#processes_list').show();
+                            $('#processes .btn').text('Hide Processes');
+                            $('#processes input[type="image"]').attr("src" , "image/icon_hide.png");
+                        }
+                    });
+                    
+                 
+                    function showkblinkerror(error){
+                        if(error == null){
+                            return true;
+                        }
+                        if(typeof error.statusText == 'undefined'){
+                            return true;
+                        }
+                        
+                        var iscloudlinux =  [% iscloudlinux %]
+                        
+                        if(error.statusText == 'timeout'){
+                            if (iscloudlinux ==  1){
+                                $('#link_to_rv_kb').attr("href", '#timeoutcloudlinux').attr('target','_blank');
+                            }
+                            else {
+                                $('#link_to_rv_kb').attr("href", '#timeoutea').attr('target','_blank');
+                            }
+                        }
+                        
+                        return true;
+                    }
+                    
+                    function showkblinkdata(data){
+                        if(data == null){
+                            return true;
+                        }
+                        if(typeof data.data.response == 'undefined'){
+                            return true;
+                        }
+                        
+                        if(data.data.response.includes("301") || data.data.response.includes("302")) {
+                            $('#link_to_rv_kb').attr("href", '#htaccess').attr('target','_blank');
+                        }
+                        else if(data.data.response.includes("400") || data.data.response.includes("401") || data.data.response.includes("403") || data.data.response.includes("404")) {
+                            $('#link_to_rv_kb').attr("href", '#contactprovidercheckdomaindns').attr('target','_blank');
+                        }
+                        
+                        return true;
+                    }
+
+            });
+        }
+    });
+</script>

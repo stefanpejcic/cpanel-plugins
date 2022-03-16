@@ -1,0 +1,56 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+
+    SET CPANEL.CPVAR.dprefix =  "../";
+    
+    SET domainname = RAW_FORM('domainname').html();
+    SET publicpath = RAW_FORM('publicpath').html();
+    SET action = RAW_FORM('action').html();
+    
+%]
+
+
+[% WRAPPER '_assets/master.html.tt'
+    app_key = 'rvsitebuildercms'
+    page_title = "RVsitebuilder"
+    include_legacy_stylesheets = 0
+    include_legacy_scripts = 0
+    include_cjt = 0
+    use_master_bootstrap = 0
+    page_stylesheets = []
+-%]
+    
+    
+        
+        <div class="body-content">
+            
+            <p class="description">
+                RV Edit Config    
+            </p>
+            
+            [% IF action == 'edit_install_config' %]
+                [% SET create_installer_config = Uapi.exec( 'RVsitebuilderCMS', 'create_installer_config' , {'publicpath' => publicpath}); %] 
+                <meta http-equiv="refresh" content="0;url=[% CPANEL.CPVAR.dprefix %]filemanager/editit.html?file=config.ini&fileop=&dir=[% publicpath %]/.rvsitebuilderinstallerconfig&dirop=&charset=&file_charset=utf-8&baseurl=&basedir=&edit=1" />
+                <p></p>
+            [% END %]
+            [% IF action == 'edit_site_env' %]
+                <meta http-equiv="refresh" content="0;url=[% CPANEL.CPVAR.dprefix %]filemanager/editit.html?file=.env&fileop=&dir=[% CPANEL.homedir %]/rvsitebuildercms/[% domainname %]&dirop=&charset=&file_charset=utf-8&baseurl=&basedir=&edit=1" />
+                <p></p>
+            [% END %]
+     
+                     
+            <section>
+                
+            </section>
+            
+            
+        
+        </div>
+    
+        [% PROCESS '_assets/cjt2_header_include.tt' %]
+   
+    
+
+[% END #wrapper -%]

@@ -1,0 +1,21 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    
+    SET CPANEL.CPVAR.dprefix = "../";
+    
+    SET domainname = RAW_FORM('domainname').html();
+    SET publicpath = RAW_FORM('publicpath').html();
+%]
+
+[% SET protocal = Uapi.exec( "RVsitebuilderCMS", "flag_testfolder_to_domain" , {"publicpath" => publicpath ,"domainname" => domainname }) %]
+[% SET filetodomain = Uapi.exec( 'RVsitebuilderCMS', 'flag_file_to_domain' , {'publicpath' => publicpath }) %]
+
+[% SET response = {
+    'protocal' = protocal
+    'filetodomain' = filetodomain
+}; %]
+
+[% response.json() %]
+                           

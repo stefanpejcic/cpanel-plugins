@@ -1,0 +1,29 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    
+    SET CPANEL.CPVAR.dprefix = "../";
+    
+    SET httpasuser = RAW_FORM('httpuser').html();
+    SET isrepair = RAW_FORM('isrepair').html();
+%]
+
+
+[% SET valid = 1 %]
+
+[% IF httpasuser == 'true' || isrepair == 1 %]
+	[% ftpcreated = { 'valid' => valid , 'reason' => 'FTP account is not required when HTTP runs as a user.' , 'exectime' => 0 } %]
+[% ELSE %]
+	[% SET ftpaccount = Uapi.exec("RVsitebuilderCMS", "str_generator", {"size" => 10 } ); %]
+	[% SET ftppassword = Uapi.exec("RVsitebuilderCMS", "str_generator", {"size" => 17 , "specialcha" => 1} ); %]
+	[% SET ftpcreated = Uapi.exec( 'Ftp', 'add_ftp', { 'user' => ftpaccount.data.str_generator, 'pass' => ftppassword.data.str_generator, 'quota' => 0, 'disallowdot' => 0 , 'homedir' => '' ,'domain' => '' } ); %]
+	[% IF ftpcreated.status != 1 %]
+	    [% valid = 0 %]
+	[% END %]
+	
+	[% ftpcreated = { 'valid' => valid , 'ftpuser' => ftpaccount.data.str_generator , 'ftppassword' => ftppassword.data.str_generator , 'errors' => ftpcreated.errors.json() , 'exectime' => 0 } %]
+[% END %]
+
+
+[% ftpcreated.json() %]

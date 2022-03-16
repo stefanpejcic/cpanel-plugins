@@ -1,0 +1,453 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+
+    SET CPANEL.CPVAR.dprefix = "../";
+    SET has_feature = CPANEL.feature('rvsitebuildercms');
+    SET list_all_domain = Uapi.exec('DomainInfo', 'domains_data', { format => 'hash' });
+    SET list_website_crated = Uapi.exec( 'RVsitebuilderCMS', 'list_website').data.list_website;
+    SET resource = Uapi.exec( 'ResourceUsage', 'get_usages' );
+   	SET domainflag = [];
+   	SET testfolder = [];
+    SET quota = Uapi.exec('Quota', 'get_quota_info');
+    SET iscloudlinux = Uapi.exec('RVsitebuilderCMS','isCloudlinux').data.is_cloudlinux;
+    SET version = Uapi.exec('RVsitebuilderCMS', 'request_getversion',{'publicpath' => list_all_domain.data.main_domain.documentroot});
+    SET	php_require = version.data.php.split('(\d+\.\d+)').grep('^\d+\.\d+') IF version.data.php.defined;
+    SET cms_version = version.data.cms.split('(\d+\.\d+)').grep('^\d+\.\d+') IF version.data.cms.defined;
+    SET mysql = Uapi.exec('Mysql', 'get_server_information').data.version.split('-');
+    SET mysql_service = mysql.1;
+%]
+[% IF mysql_service == '' %]
+[% mysql_service = 'Mysql' %]
+[% END %]
+
+[% Uapi.exec("RVsitebuilderCMS", "create_mysql_version",{'mysql_version' => mysql.0,'mysql_service' => mysql_service}); %]
+
+[% SET diskmax = quota.data.megabyte_limit %]
+[% SET diskusage = quota.data.megabytes_used %]
+[% FOREACH q = resource.data %]
+    [% IF q.id == 'mysql_databases' %]
+        [% SET mysqlmax = q.maximum; %]
+        [% SET mysqlusage = q.usage; %]
+    [% END %]
+[% END %]
+[% IF mysqlmax == '' || mysqlmax == undef || mysqlmax == null %]
+    [% mysqlmax == 'unlimited' %]
+[% END %]
+[% SET disk_validate = 250; %]
+[% SET disk_empty = diskmax - diskusage; %]
+[% WRAPPER '_assets/master.html.tt'
+    #app_key = 'rvsitebuildercms'
+    #page_title = "RVsitebuilder"
+    include_legacy_stylesheets = 0
+    include_legacy_scripts = 0
+    include_cjt = 0
+    use_master_bootstrap = 0
+    page_js = js_code
+    page_stylesheets = []
+    page_scripts = []
+-%]
+    <style>
+        .custom_color {
+            color : #028fc7;
+        }
+        .alert {
+            border-radius : 10px;
+        }
+        .btn {
+            border-radius : 20px;
+            font-size:130%;
+            color:white;
+            width:13%;
+        }
+        .btn:hover {
+            color: white;
+        }
+        .cpanel_body {
+            max-width : 100%;
+        }
+    </style>
+    [% IF has_feature %]
+        <form action="createnewsite.html" name="selectdomain" id="selectdomain"  method="post" enctype="multipart/form-data">
+            <div class="body-content text-center" style="padding-bottom:30px;">
+                <div>
+                    <img src="image/logo_rvsitebuilder.png" style="width:30%;margin-top:10px;margin-bottom:35px;">
+                </div>
+                <h3 style="font-weight:700;font-size:33px;text-align:center;" class="custom_color">Select Domain</h3>
+                <p>Select a domain name you want to create a website by RVsitebuilder CMS. All of your domains and subdomains are here!</p>
+                <div class="row">
+                    <div class="form-group col-md-offset-4 col-md-4 text-left dropdown" style="padding-top:15px;">
+                        <label for="domainname" class="custom_color">Domain name :</label>
+                        <select name="domainname" id="domainname" class="form-control" style="border-radius:10px;border-color:#65c3e8;">
+                                <option  protocal="" value="[% list_all_domain.data.main_domain.domain %]" publicpath="[% list_all_domain.data.main_domain.documentroot %]">[% list_all_domain.data.main_domain.domain %]</option>
+                            [% FOREACH q IN list_all_domain.data.sub_domains %]
+                                <option  protocal="" value="[% q.domain %]" publicpath="[% q.documentroot %]">[% q.domain %]</option>
+                            [% END %]
+                            [% FOREACH q IN list_all_domain.data.addon_domains %]
+                                <option protocal="" value="[% q.domain %]" publicpath="[% q.documentroot %]">[% q.domain %]</option>
+                            [% END %]
+                        </select>
+                        <p style="padding-top:8px;padding-left:15px;font-size:13px;">
+                            path : <span id="domainpath" name=""></span>
+                        </p>
+                        <input type="hidden" id="hiddomainpath" name="hiddomainpath" value="" />
+                        <input type="hidden" id="hidprotocal" name="hidprotocal" value="" />
+                    </div>
+                </div>
+
+                <div id="domainwarning" class="hidden">
+                    <div class="alert alert-warning">
+                        <span class="glyphicon glyphicon-warning-sign"></span>
+                        <div class="alert-message" id="one-click-destructive-warning">
+                            <strong>Warning:</strong>
+                            This domain name (<span id="domaindup"></span>) is a current online website created with RVsitebuilder. If you're running this installation now, all current website data will be completely replaced with new one.
+                        </div>
+                    </div>
+                </div>
+                <hr style="width:60%;margin-top:15px;padding-bottom:15px;border-color:#a5a5a5;">
+                <div class="form-group">
+                    <button disabled id="selectdomainsubmit" class="btn" type="submit" style="background-color:#338fc6;">
+                        <b style="font-weight:600px;">Next</b>
+                    </button>
+                    <a class="btn" href="index.html" style="background-color:#b3b3b3;margin-left:10px;">
+                        <b style="font-weight:600px;">Cancel</b>
+                    </a>
+                </div>
+            </div>
+        </form>
+        <div id="validator" class="hidden">
+            <div>
+                <div class="alert alert-danger">
+                    <span class="glyphicon glyphicon-exclamation-sign"></span>
+                    <div class="alert-message" id="one-click-destructive-warning">
+                        <strong id="domainerror"> </strong>
+                        <div id="texterror">
+                        </div>
+                        <a id="link_to_rv_kb" href="https://support.rvglobalsoft.com/hc/en-us/articles/900000146306-How-to-fix-internal-errors-400-403-404-500-502-503-504-on-creating-site-with-RVsitebuilder-7-">How to resolve problem</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="">
+            <div>
+                <div class="alert alert-info">
+                    <span class="glyphicon glyphicon-info-sign"></span>
+                    <div class="alert-message" id="one-click-destructive-warning">
+                        <strong>Important:</strong> The installer will write files in the selected domain name’s document root. The installer will overwrite any existing file names matched with file names in part of RVsitebuilder Installation.
+                        <br> Or <a href="../subdomain/index.html">Click here</a> for create sub domain.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    [% ELSE -%]
+
+        <div class="body-content">
+            <div class="alert alert-danger"></div>
+        </div>
+
+    [% END -%]
+
+    [% PROCESS '_assets/cjt2_header_include.tt' %]
+
+    [% BLOCK js_block %]
+        <script type="text/javascript">
+            // Wait for require.js to load using the new event, then load JQuery
+            window.addEventListener("library-loaded", function(e) {
+                if (e.detail.library.match(/requirejs/) ) {
+                    require(["jquery"], function($) {
+                        //on ready check domain property
+                        $( document ).ready(function() {
+                            var element = $("#domainname").find('option:selected');
+                            var publicpath = element.attr("publicpath");
+                            var domainname = element.attr("value");
+                            $('#domainpath').text(publicpath);
+                            $('#hiddomainpath').val(publicpath);
+                            doAnAjax('domain_validation.html',{'domainname':domainname,'publicpath':publicpath},'GET', function(error, data) {
+                                console.log(data);
+                                $('#hidprotocal').val(data.protocal.data.protocal);
+
+                                if(data.protocal.data.success == "false"){
+                                    $('#selectdomainsubmit').prop("disabled",true);
+                                    $('#validator').removeClass("hidden");
+                                    $('#domainerror').text('Error - ' +data.protocal.data.domainname);
+                                    if(data.protocal.data.respcode == '301' || data.protocal.data.respcode == '302'){
+                                        alink = jQuery(data.protocal.data.reason).find('a').attr('href');
+                                        $('#texterror').text(data.protocal.data.status + ' - '+data.protocal.data.domainname+' is redirect to ' + alink);
+                                        $('#link_to_rv_kb').attr("href", 'https://support.rvglobalsoft.com/hc/en-us/articles/360036051834-RVsitebuilder-Error-htaccess-301-302-when-click-Create-new-site-in-RVsitebuilder7-cPanel').attr('target','_blank');
+                                    }
+                                    else if(data.protocal.data.respcode == '400' || data.protocal.data.respcode == '403' || data.protocal.data.respcode == '404' || data.protocal.data.respcode == '500'){
+                                        $('#texterror').text(data.protocal.data.status + ' - '+data.protocal.data.domainname+' is not resolved to this server yet or is not properly configured on this server. Please contact your hosting provider.');
+                                        $('#link_to_rv_kb').attr("href", 'https://support.rvglobalsoft.com/hc/en-us/articles/900000146306-How-to-fix-internal-errors-400-403-404-500-502-503-504-on-creating-site-with-RVsitebuilder-7-').attr('target','_blank');
+                                    }
+                                    else {
+                                        $('#texterror').text(data.protocal.data.reason);
+                                    }
+                                }
+                                //data.protocal.data.success == "true"
+                                else {
+                                    //check database enough / check domainname valid / check php version
+                                    var fileflag = (data.filetodomain.data.flag_file_to_domain == 1) ? true : false;
+                                    if(dbenough() == true &&  phpversion(data.protocal.data) == true && domainvalid(data.protocal.data.protocal,fileflag) == true && checkDisk() == true && checkCompatible(data.protocal.data) == true && checkMysqlVersion() == true) {
+                                        $('#selectdomainsubmit').prop("disabled",false);
+                                    }
+                                    else {
+                                        $('#selectdomainsubmit').prop("disabled",true);
+                                        $('#validator').removeClass("hidden");
+                                    }
+                                }
+                                doAnAjax('is_writable.html',{'publicpath':publicpath},'GET', function(error, data) {
+                                console.log(data);
+                                    if(data.htaccess != 1 || data.index != 1 || data.rvsitebuildercms != 1){
+                                        $('#selectdomainsubmit').prop("disabled",true);
+                                        $('#validator').removeClass("hidden");
+                                        $('#link_to_rv_kb').attr("href", 'https://blog.cpanel.com/how-to-assign-permissions-to-files-and-folders-in-cpanel/').attr('target','_blank');
+                                        if(Boolean(data.htaccess) != true){
+                                            $('#texterror').html($('#texterror').html() + '<li> Please check your file permission to be writable at ' + data.domain + '/.htaccess </li>');
+                                        }
+                                        if(Boolean(data.index) != true){
+                                            $('#texterror').html($('#texterror').html() + '<li> Please check your file permission to be writable at ' + data.domain + '/index.php </li>');
+                                        }
+                                        if(Boolean(data.rvsitebuildercms) != true){
+                                            $('#texterror').html($('#texterror').html() + '<li> Please check your file permission to be writable at /home/user/rvsitebuildercms/ </li>');
+                                        }
+                                    }
+                                });
+                            });
+
+                            checkdomaincreated();
+
+                        });
+
+                        $( "#domainname" ).change(function() {
+                            $('#validator').addClass("hidden");
+                            $('#texterror').text("");
+                            $('#domainerror').text("");
+
+                            var element = $(this).find('option:selected');
+                            var publicpath = element.attr("publicpath");
+                            var domainname = element.attr("value");
+                            $('#domainpath').text(publicpath);
+                            $('#hiddomainpath').val(publicpath);
+
+                            doAnAjax('domain_validation.html',{'domainname':domainname,'publicpath':publicpath},'GET', function(error, data) {
+                                 console.log(data);
+                                $('#hidprotocal').val(data.protocal.data.protocal);
+
+                                if(data.protocal.data.success == "false"){
+                                    $('#selectdomainsubmit').prop("disabled",true);
+                                    $('#validator').removeClass("hidden");
+                                    $('#domainerror').text('Error - ' +data.protocal.data.domainname);
+                                    if(data.protocal.data.respcode == '301' || data.protocal.data.respcode == '302'){
+                                        $('#texterror').text(data.protocal.data.status + ' '+data.protocal.data.domainname+' is redirect.');
+                                        $('#link_to_rv_kb').attr("href", 'https://support.rvglobalsoft.com/hc/en-us/articles/360036051834-RVsitebuilder-Error-htaccess-301-302-when-click-Create-new-site-in-RVsitebuilder7-cPanel').attr('target','_blank');
+                                    }
+                                    else if(data.protocal.data.respcode == '400' || data.protocal.data.respcode == '403' || data.protocal.data.respcode == '404' || data.protocal.data.respcode == '500'){
+                                        $('#texterror').text(data.protocal.data.status + ' '+data.protocal.data.domainname+' is not resolved to this server yet or is not properly configured on this server. Please contact your hosting provider.');
+                                        $('#link_to_rv_kb').attr("href", 'https://support.rvglobalsoft.com/hc/en-us/articles/900000146306-How-to-fix-internal-errors-400-403-404-500-502-503-504-on-creating-site-with-RVsitebuilder-7-').attr('target','_blank');
+                                    }
+                                    else {
+                                        $('#texterror').text(data.protocal.data.reason);
+                                    }
+                                }
+                                //data.protocal.data.success == "true"
+                                else {
+                                    //check database enough / check domainname valid / check php version
+                                    var fileflag = (data.filetodomain.data.flag_file_to_domain == 1) ? true : false;
+                                    if(dbenough() == true &&  phpversion(data.protocal.data) == true && domainvalid(data.protocal.data.protocal,fileflag) == true && checkDisk() == true && checkCompatible(data.protocal.data) == true && checkMysqlVersion() == true) {
+                                        $('#selectdomainsubmit').prop("disabled",false);
+                                    }
+                                    else {
+                                        $('#selectdomainsubmit').prop("disabled",true);
+                                        $('#validator').removeClass("hidden");
+                                    }
+                                }
+
+                                doAnAjax('is_writable.html',{'publicpath':publicpath},'GET', function(error, data) {
+                                console.log(data);
+                                    if(data.htaccess != 1 || data.index != 1 || data.rvsitebuildercms != 1){
+                                        $('#selectdomainsubmit').prop("disabled",true);
+                                        $('#validator').removeClass("hidden");
+                                        $('#link_to_rv_kb').attr("href", 'https://blog.cpanel.com/how-to-assign-permissions-to-files-and-folders-in-cpanel/').attr('target','_blank');
+                                        if(Boolean(data.htaccess) != true){
+                                            $('#texterror').html($('#texterror').html() + '<li> Please check your file permission to be writable at ' + data.domain + '/.htaccess </li>');
+                                        }
+                                        if(Boolean(data.index) != true){
+                                            $('#texterror').html($('#texterror').html() + '<li> Please check your file permission to be writable at ' + data.domain + '/index.php </li>');
+                                        }
+                                        if(Boolean(data.rvsitebuildercms) != true){
+                                            $('#texterror').html($('#texterror').html() + '<li> Please check your file permission to be writable at /home/user/rvsitebuildercms/ </li>');
+                                        }
+                                    }
+                                });
+
+                            });
+                            checkdomaincreated();
+                        });
+
+                        function dbenough() {
+                            var domainselect = $("#domainname").val();
+                            var mysqlmax = '[% mysqlmax %]';
+                            var mysqlusage = '[% mysqlusage %]';
+                            if(mysqlmax == 'unlimited' || mysqlmax == '') {
+                                return true;
+                            }
+                            var diff = parseInt(mysqlmax) - parseInt(mysqlusage);
+                            if(diff > 0) {
+                                return true;
+                            }
+                            $('#texterror').text($('#texterror').text() + " Not enough database");
+                            $('#link_to_rv_kb').attr('href', 'https://support.rvglobalsoft.com/hc/en-us/articles/900004086046-Create-site-error-Not-enough-database-').attr('target','_blank');
+                            $('#domainerror').text('Error - ' +domainselect);
+                            return false;
+                        }
+
+                        function phpversion(php_data) {
+                            var domainselect = $("#domainname").val();
+                            var phpok = true;
+                            if (php_data.domainname == domainselect && php_data.flag_testfolder_to_domain == 0) {
+                                phpok = false;
+                                console.log(php_data);
+                                var res = php_data.page;
+                                if(res == 'Cannot load Extension JSON'){
+                                    $('#texterror').text($('#texterror').text() + 'Cannot load Extension JSON');
+                                    $('#link_to_rv_kb').attr('href','https://support.rvglobalsoft.com/hc/en-us/articles/900004161226-Create-site-error-Error-Please-allow-extension-json-').attr('target','_blank');
+                                }
+                                if(typeof(php_data.result) != 'undefined' && php_data.result.phpini !== null){
+                                    if(checkCompatible(php_data) != true){
+                                        return phpok;
+                                    }
+                                    if(php_data.result.phpini.includes("ea-php")){
+                                        $('#texterror').text($('#texterror').text() + php_data.result.message);
+                                        $('#link_to_rv_kb').attr('href','https://support.rvglobalsoft.com/hc/en-us/articles/360025674553-Installation-issue-on-cPanel-server').attr('target','_blank');
+                                    }
+                                    else if(php_data.result.phpini.includes("alt")){
+                                        $('#texterror').text($('#texterror').text() + php_data.result.message);
+                                        $('#link_to_rv_kb').attr('href', 'https://support.rvglobalsoft.com/hc/en-us/articles/360034638994-Installation-issue-on-EasyApache').attr('target','_blank');
+                                    }
+                               	}
+                            }
+
+                            return phpok;
+                        }
+
+
+                        function domainvalid(protocal,fileflag) {
+                            //test domain valid by call image
+                            var domainname = $("#domainname").val();
+                            var protocal = ($("#domainname").attr("protocal") == 'http://' || $("#domainname").attr("protocal") == 'https://') ? $("#domainname").attr("protocal") : 'https://';
+                            if(domainname != '' && fileflag == true){
+                                var imageUrl = protocal+domainname+'/domainready.png';
+                                imageExists(imageUrl, function(exists) {
+                                    console.log('test image in domain : url=' + imageUrl + ', exists=' + exists);
+                                    if(exists == true){
+                                        return true;
+                                    } else {
+                                        $('#texterror').text($('#texterror').text() + ' ' + domainname + ' is not resolved to this server yet or is not properly configured on this server. Please contact your hosting provider.');
+                                        $('#domainerror').text('Error - ' +domainname);
+                                        $('#link_to_rv_kb').attr("href", '#contactprovidercheckdomaindns').attr('target','_blank');
+                                        return false;
+                                    }
+                                });
+                            }
+                            return true
+                        }
+
+                        function imageExists(url, callback) {
+                            var img = new Image();
+                            img.onload = function() { callback(true); };
+                            img.onerror = function() { callback(false); };
+                            img.src = url;
+                        }
+
+                        function checkdomaincreated(){
+                            //check domain is created site by rvsb
+                            var domainname = $("#domainname").val();
+                            var list_domain_created = [% list_website_crated.json() || {} %];
+                            $.each(list_domain_created, function(key) {
+                                if (list_domain_created[key].sitename == domainname) {
+                                    $('#domainwarning').removeClass("hidden");
+                                    $('#domaindup').text(domainname);
+                                } else {
+                                    $('#domainwarning').addClass("hidden");
+                                }
+                            });
+                            return true;
+                        }
+
+                        function doAnAjax(url,param,type,callback) {
+                            $.ajax({
+                                url : url,
+                                data : param,
+                                cache : false,
+                                type : type,
+                                dataType : "json",
+                                error : function(error) {
+                                    console.log(error);
+                                    callback(error, null);
+                                },
+                                success : function(data) {
+                                    callback(null, data);
+                                },
+                                timeout: 400000
+                            });
+                        }
+
+                        function checkDisk(){
+                            var diskempty = [% disk_empty %];
+                            var validate = [% disk_validate %];
+                            var max = [% diskmax %];
+                            var disk = {
+                                        'disk_quota' : [% diskmax.json() %],
+                                        'disk_usage' : [% diskusage.json() %],
+                                        'disk_empty':[% disk_empty.json() %],
+                                    };
+                            console.log(disk)
+                            if(diskempty >= validate || max == 0){
+                                return true;
+                            }
+                            $('#texterror').text($('#texterror').text() + " Disk space is not enough. Installation requires at least 250MB free disk space.");
+                            $('#link_to_rv_kb').attr("href", 'https://support.rvglobalsoft.com/hc/en-us/articles/4402989798681-Installation-Error-Disk-space-is-not-enough-on-your-website').attr('target','_blank');
+                            return false;
+                        }
+                        function checkCompatible(php_data){
+                            var service_php_require = [% php_require.json() %];
+                            var service_cms_version = [% cms_version.json() %];
+                            var current_phpversion = php_data.result.phpversion.substring(0,3);
+                            if(jQuery.inArray(current_phpversion, service_php_require) != -1) {
+                                return true;
+                            } else {
+                                $('#texterror').text($('#texterror').text() + "RVsitebuilder version " + service_cms_version + " require PHP version " + service_php_require[0] + " - " + service_php_require[service_php_require.length-1] + " only. Please check your PHP version");
+                                $('#link_to_rv_kb').attr("href", 'https://support.rvglobalsoft.com/hc/en-us/articles/4403004561433-Create-site-error-Require-PHP-version').attr('target','_blank');
+                                return false;
+                            }
+                        }
+                        function checkMysqlVersion(){
+                            var mysql_version = [% mysql.0.grep('\d+\.\d+').0.json %];
+                            var mysql_service = [% mysql_service.json %];
+                            if(mysql_service == 'Mysql' && mysql_version < '5.7.0'){
+                                $('#texterror').text($('#texterror').text() + "RVsitebuilder require MySQL 5.7 or above");
+                                $('#link_to_rv_kb').attr("href", 'https://docs.cpanel.net/whm/sql-services/mysql-or-mariadb-upgrade/').attr('target','_blank');
+                                return false;
+                            }else if(mysql_service == 'MariaDB' && mysql_version < '10.2.0'){
+                                $('#texterror').text($('#texterror').text() + "RVsitebuilder require MariaDB 10.2 or above");
+                                $('#link_to_rv_kb').attr("href", 'https://docs.cpanel.net/whm/sql-services/mysql-or-mariadb-upgrade/').attr('target','_blank');
+                                return false;
+                            }else{
+                                return true;
+                            }
+                        }
+
+                        $( "#domainname" ).change(function() {
+
+                        });
+                    });
+                }
+            });
+        </script>
+    [% END %]
+    [% js_code = PROCESS js_block %]
+
+[% END #wrapper -%]

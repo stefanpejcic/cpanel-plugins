@@ -1,0 +1,55 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+
+    SET CPANEL.CPVAR.dprefix = "../";
+    SET has_feature = CPANEL.feature('rvsitebuildercms');
+
+%]
+
+
+[% WRAPPER '_assets/master.html.tt'
+    app_key = 'rvsitebuildercms'
+    page_title = "RVsitebuilder"
+    include_legacy_stylesheets = 0
+    include_legacy_scripts = 0
+    include_cjt = 0
+    use_master_bootstrap = 0
+    page_stylesheets = []
+-%]
+    
+    
+    [% IF has_feature %]
+        
+        <div class="body-content">
+            
+            <p class="description">
+                
+            </p>
+            
+            <section>
+                <iframe src="https://www.rvsitebuilder.com/enduser-agreement" height="600" width="800" style="border:none;"></iframe>
+            </section>
+            
+            <section>
+                <div class="form-group">
+                 <a href="javascript:history.back()" class="btn btn-primary" id="" >Back</a>
+                </div>
+            </section>
+            
+        
+        
+        </div>
+    
+    [% ELSE -%]
+    
+        <div class="body-content">
+            <div class="alert alert-danger">
+            </div>
+        </div>
+    
+    [% END -%]
+    
+
+[% END #wrapper -%]

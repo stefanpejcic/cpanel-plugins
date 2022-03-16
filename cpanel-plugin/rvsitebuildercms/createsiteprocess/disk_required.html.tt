@@ -1,0 +1,13 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    
+    SET CPANEL.CPVAR.dprefix = "../";
+%]
+
+
+[% diskreq = Uapi.exec("RVsitebuilderCMS" , "disk_required" , {}); %]
+
+[% diskreq.json() %]
+                           

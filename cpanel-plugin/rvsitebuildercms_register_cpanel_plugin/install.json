@@ -1,0 +1,13 @@
+[
+    {
+        "uri":"rvsitebuildercms/index.html",
+        "order":"999",
+        "name":"RVsitebuilder 7",
+        "id":"rvsitebuildercms",
+        "type":"link",
+        "group_id":"software",
+        "icon":"rvsitebuildercms.png",
+        "target":"_blank",
+        "featuremanager":true
+    }
+]

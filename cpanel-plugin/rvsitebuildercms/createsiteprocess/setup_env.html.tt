@@ -1,0 +1,47 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    
+    SET CPANEL.CPVAR.dprefix = "../";
+    
+    SET domainname = RAW_FORM('domainname').html();
+    SET tokenkey = RAW_FORM('tokenkey').html();
+    SET publicpath = RAW_FORM('publicpath').html();
+    SET fulldbname = RAW_FORM('fulldbname').html();
+    SET fulldbuser = RAW_FORM('fulldbuser').html();
+    SET dbpasswd = RAW_FORM('dbpasswd').html();
+    SET ftpaccount = RAW_FORM('ftpaccount').html();
+    SET ftppassword = RAW_FORM('ftppassword').html();
+    SET ftpserver = RAW_FORM('ftpserver').html();
+    SET ftpport = RAW_FORM('ftpport').html();
+    SET appname = RAW_FORM('appname').html();
+    SET protocal = RAW_FORM('protocal').html();
+    SET reqtype = RAW_FORM('reqtype').html();
+    SET isrepair = RAW_FORM('isrepair').html();
+%]
+
+[% IF isrepair == 0 %]
+	[% setupenv = Uapi.exec("RVsitebuilderCMS" , "setup_env" , {
+	                                                                                        'domainname' => domainname, 
+	                                                                                        'publicpath' => publicpath , 
+	                                                                                        'dbhost' => 'localhost',
+	                                                                                        'dbname' => fulldbname , 
+	                                                                                        'dbuser' => fulldbuser, 
+	                                                                                        'dbpassword' => dbpasswd , 
+	                                                                                        'ftpaccount' => ftpaccount,
+	                                                                                        'ftppassword'=> ftppassword,
+	                                                                                        'ftpserver'=> ftpserver,
+	                                                                                        'ftpport'=> ftpport, 
+	                                                                                        'appname'   => appname,
+	                                                                                        'tokenkey' => tokenkey,
+	                                                                                        'protocal' => protocal,
+	                                                                                        'reqtype' => reqtype
+	                                                                                        }
+	                                                    ); 
+	%]
+[% ELSE %]
+	[% setupenv = { 'data' => {'setup_env' => 1 , 'exectime' => 0} } %]
+[% END %]
+                            
+[% setupenv.json() %]

@@ -1,0 +1,16 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    SET CPANEL.CPVAR.dprefix = "../";
+    SET dbuser = RAW_FORM('dbuser').html();
+%]
+
+[% SET userdeleted = {} %]
+[% IF dbuser != '' %]
+	[% userdeleted = Uapi.exec("Mysql", "delete_user", {"name" => dbuser} ); %]
+[% END %]
+
+
+
+[% userdeleted.json() %]

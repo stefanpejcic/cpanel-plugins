@@ -1,0 +1,17 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    
+    SET CPANEL.CPVAR.dprefix = "../";
+    
+    SET domainname = RAW_FORM('domainname').html();
+    SET tokenkey = RAW_FORM('tokenkey').html();
+    SET protocal = RAW_FORM('protocal').html();
+    SET publicpath = RAW_FORM('publicpath').html();
+%]
+
+
+[% precheck = Uapi.exec("RVsitebuilderCMS" , "pre_check_php" , {'publicpath' => publicpath, 'domainname' => domainname,'tokenkey' => tokenkey,'protocal' => protocal}); %]
+
+[% precheck.json() %]

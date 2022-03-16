@@ -1,0 +1,13 @@
+[%
+    USE Uapi;
+    USE JSON;
+    USE Dumper;
+    
+    SET CPANEL.CPVAR.dprefix = "../";
+%]
+
+
+[% license = Uapi.exec("RVsitebuilderCMS" , "check_license" , {}); %]
+
+[% license.json() %]
+
