@@ -1,26 +1,30 @@
 ## Install stable
 
-cd /usr/src; rm -fv rvsitebuilder7cpinstall.sh; wget <http://download.rvglobalsoft.com/rvsitebuilder7cpinstall.sh>; chmod +x rvsitebuilder7cpinstall.sh; ./rvsitebuilder7cpinstall.sh
+`cd /usr/src; rm -fv rvsitebuilder7cpinstall.sh; wget <http://download.rvglobalsoft.com/rvsitebuilder7cpinstall.sh>; chmod +x rvsitebuilder7cpinstall.sh; ./rvsitebuilder7cpinstall.sh`
 </br>OR</br>
-cd /usr/src; rm -fv rvsitebuilder7cpinstall.sh; wget <http://download.rvglobalsoft.com/rvsitebuilder7cpinstall.sh>; chmod +x rvsitebuilder7cpinstall.sh; ./rvsitebuilder7cpinstall.sh stable
+`cd /usr/src; rm -fv rvsitebuilder7cpinstall.sh; wget <http://download.rvglobalsoft.com/rvsitebuilder7cpinstall.sh>; chmod +x rvsitebuilder7cpinstall.sh; ./rvsitebuilder7cpinstall.sh stable`
 </br>OR</br>
-perl /usr/local/rvglobalsoft/rvsitebuilder7/auto/autorvsitebuilder7.cgi
-***
+`perl /usr/local/rvglobalsoft/rvsitebuilder7/auto/autorvsitebuilder7.cgi`
+
+---
 
 ## Install latest
 
-cd /usr/src; rm -fv rvsitebuilder7cpinstall.sh; wget <http://download.rvglobalsoft.com/rvsitebuilder7cpinstall.sh>; chmod +x rvsitebuilder7cpinstall.sh; ./rvsitebuilder7cpinstall.sh latest
-***
+`cd /usr/src; rm -fv rvsitebuilder7cpinstall.sh; wget <http://download.rvglobalsoft.com/rvsitebuilder7cpinstall.sh>; chmod +x rvsitebuilder7cpinstall.sh; ./rvsitebuilder7cpinstall.sh latest`
+
+---
 
 ## Install version or tier specific
 
-cd /usr/src; rm -fv rvsitebuilder7cpinstall.sh; wget <http://download.rvglobalsoft.com/rvsitebuilder7cpinstall.sh>; chmod +x rvsitebuilder7cpinstall.sh; ./rvsitebuilder7cpinstall.sh [vX.X.X , X.X.X , beta , alpha , X.X.X-beta.X , vX.X.X-alpha.X]
-***
+`cd /usr/src; rm -fv rvsitebuilder7cpinstall.sh; wget <http://download.rvglobalsoft.com/rvsitebuilder7cpinstall.sh>; chmod +x rvsitebuilder7cpinstall.sh; ./rvsitebuilder7cpinstall.sh [vX.X.X , X.X.X , beta , alpha , X.X.X-beta.X , vX.X.X-alpha.X]`
+
+---
 
 ## Uninstall
 
-cd /usr/src; rm -fv rvsitebuilder7cpuninstall.sh; wget <http://download.rvglobalsoft.com/rvsitebuilder7cpuninstall.sh>; chmod +x rvsitebuilder7cpuninstall.sh; ./rvsitebuilder7cpuninstall.sh
-***
+`cd /usr/src; rm -fv rvsitebuilder7cpuninstall.sh; wget <http://download.rvglobalsoft.com/rvsitebuilder7cpuninstall.sh>; chmod +x rvsitebuilder7cpuninstall.sh; ./rvsitebuilder7cpuninstall.sh`
+
+---
 
 ## นิยาม
 
@@ -29,4 +33,4 @@ cd /usr/src; rm -fv rvsitebuilder7cpuninstall.sh; wget <http://download.rvglobal
 - beta,alpha -download the latest released version and the name contains the words "alpha" or "beta" //ดาวน์โหลด release ล่าสุด ที่เลขเวอร์ชั่นประกอบด้วย beta หรือ alpha ตามที่ระบุ
 - version or tier specific (vx.x.x or vx.x.x-beta.xxx) -download according to the specified version //ดาวโหลด release จากเวอร์ชั่นที่ระบุเท่านั้น
 
-***
+---
